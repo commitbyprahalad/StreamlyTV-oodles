@@ -1,0 +1,1111 @@
+/* ========================================
+   STREAMLYTV SETTINGS MODULE
+   Samsung Tizen Smart TV
+   Design: Figma v2.2.3
+   ======================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  background: var(--bg-main);
+  color: #fff;
+}
+
+/* ========================================
+   LOADING
+   ======================================== */
+
+.settings-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(3, 12, 24, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Above the OTP / password / sign-out overlays (.signout-overlay is
+     10000) so their API calls show the loader too; below PopupManager
+     (99999) so result popups still appear on top. */
+  z-index: 10050;
+  animation: loading-fade-in 0.15s ease-out;
+}
+
+.settings-loading.hidden {
+  display: none;
+}
+
+.settings-loading .loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.settings-loading .loading-spinner {
+  width: 64px;
+  height: 64px;
+  border: 6px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+  margin-bottom: 22px;
+}
+
+@keyframes loading-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.settings-loading .loading-text {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin: 0;
+  text-align: center;
+}
+
+/* ========================================
+   MAIN CONTAINER
+   ======================================== */
+
+.settings-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-screen-gradient);
+  overflow: hidden;
+}
+
+/* ========================================
+   BODY: SIDEBAR + CONTENT
+   ======================================== */
+
+.settings-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* ========================================
+   SIDEBAR
+   ======================================== */
+
+.settings-sidebar {
+  width: 340px;
+  background: linear-gradient(94.09deg, #001325 28.4%, rgba(0, 19, 37, 0.07) 97%);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-right: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Back button */
+.sidebar-back {
+  display: flex;
+  align-items: center;
+  padding: 20px 24px 16px 24px;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s;
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-back .back-arrow {
+  font-size: 28px;
+  margin-right: 12px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebar-back.focused {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Menu items */
+.sidebar-menu {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar-menu::-webkit-scrollbar {
+  display: none;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 30px 24px;
+  cursor: pointer;
+  outline: none;
+  font-size: 28px;
+  color: #fff;
+  transition: all 0.15s;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.04);
+  position: relative;
+}
+
+.menu-item .menu-icon {
+  width: 34px;
+  font-size: 20px;
+  text-align: center;
+  margin-right: 16px;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.menu-item .menu-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menu-item .menu-chevron {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 8px;
+}
+
+/* Focused state - light blue pill */
+.menu-item.focused {
+  background: rgba(100, 180, 255, 0.15);
+  color: #fff;
+}
+
+.menu-item.focused .menu-icon {
+  color: #fff;
+}
+
+.menu-item.focused .menu-chevron {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Active (selected page) */
+.menu-item.active {
+  color: #fff;
+  border-left: 6px solid #fff;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+}
+
+.menu-item.active .menu-icon {
+  color: #fff;
+}
+
+.menu-item.active .menu-chevron {
+  color: #fff;
+}
+
+/* Sign out at bottom */
+.menu-item.signout-item {
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+}
+
+.menu-item.signout-item.focused {
+  background: rgba(255, 68, 68, 0.12);
+}
+
+.menu-item.signout-item.focused .menu-icon {
+  color: var(--color-error-text);
+}
+
+/* ========================================
+   CONTENT AREA
+   ======================================== */
+
+.settings-content {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+  padding: 30px 40px;
+}
+
+/* Content card wrapper */
+.content-card {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-card-header {
+  padding: 20px 30px;
+  flex-shrink: 0;
+}
+
+.content-card-header .page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+}
+
+.content-card-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 30px;
+  -ms-overflow-style: none;
+}
+
+/* Hidden on every page except Privacy / Terms, which add .scrollbar-primary
+   (css/theme.css) in renderPage(). */
+.content-card-body:not(.scrollbar-primary) {
+  scrollbar-width: none;
+}
+
+.content-card-body:not(.scrollbar-primary)::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
+}
+
+/* ========================================
+   ACCOUNT PAGE
+   ======================================== */
+
+/* Shared card shell: Account Details / Subscription / Card Details */
+.account-details-section,
+.subscription-section,
+.card-details-section {
+  outline: none;
+  border-radius: 10px;
+  transition: all 0.15s;
+  padding: 30px 25px;
+  background: var(--bg-popup);
+}
+
+.account-details-section,
+.subscription-section {
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid transparent;
+}
+
+.section-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+}
+
+.account-details-section .section-title {
+  margin-bottom: 16px;
+}
+
+/* Label / value rows used by all three cards */
+.account-detail-item .detail-label,
+.subscription-field .sub-label,
+.card-detail-field .card-label {
+  font-size: 28px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.account-detail-item .detail-value,
+.subscription-field .sub-value,
+.card-detail-field .card-value {
+  font-size: 28px;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Two-column grid for account details */
+.account-details-grid {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-direction: column;
+}
+
+.account-detail-item {
+  width: -webkit-fill-available;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Delete Account button */
+.delete-account-btn {
+  background: transparent;
+  border: 2px solid var(--color-danger);
+  color: var(--color-danger);
+  padding: 12px 28px;
+  font-size: 24px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s;
+  width: 250px;
+  margin: auto;
+}
+
+/* Highlight the Delete Account button when its parent card is focused */
+.account-details-section.focused .delete-account-btn {
+  border-color: var(--color-danger);
+  background: #cd5c5c42;
+}
+
+.subscription-card {
+  display: flex;
+  gap: 16px;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.subscription-field {
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Subscription action button (label/behavior toggles between Cancel and
+   Resume Subscription based on subscription.canceled). Unlike the other
+   cards, the Subscription *container* is never focusable — only this
+   button is — so it gets its own direct .focused style instead of being
+   highlighted via a focused parent. */
+.subscription-btn,
+.resume-subscription-btn {
+  padding: 10px 24px;
+  font-size: 24px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s;
+  display: flex;
+  width: fit-content;
+  margin: auto;
+  justify-content: center;
+}
+
+.subscription-btn {
+  background: transparent;
+  border: 2px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+.resume-subscription-btn {
+  background: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 600;
+}
+
+.subscription-btn.focused {
+  background: var(--color-primary-a12);
+  border-color: var(--color-primary-light);
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Card Details section — informational only, never focusable (no
+   .focused border rule, unlike account-details); shell shared above */
+.card-detail-field {
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ========================================
+   DEVICE PAGE
+   ======================================== */
+
+.device-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.device-page-header .device-count {
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* "X / Y" connected-devices vs plan-limit count, pulled from the
+   newconnecteddevice API (numofdevice / userDeviceLimit) */
+.device-page-header .device-count span {
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+.device-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.device-grid .sub-value {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.7);
+  grid-column: 1 / -1;
+}
+
+.device-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 20px;
+  outline: none;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.device-card.focused {
+  border-color: var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Default Logout Button */
+.logout-btn-device {
+  background: rgb(161 150 106 / 20%);
+  width: fit-content;
+  font-weight: 700;
+  font-size: 18px;
+  margin: auto;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  padding: 8px 16px;
+}
+
+/* Highlight Logout Button when card is focused */
+.device-card.focused:not(.this-device-card) .logout-btn-device {
+  text-align: center;
+  border: 2px solid var(--color-primary);
+  background: var(--color-primary);
+  font-weight: 500;
+  color: var(--color-on-primary);
+}
+
+.device-card .device-monitor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+
+}
+
+.device-card .device-monitor img {
+  object-fit: contain;
+}
+
+.device-card .device-ip {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  display: flex;
+  margin-top: 25px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.device-card .device-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.device-card .device-info-row .info-line {
+  font-size: 18px;
+  color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+}
+
+.device-card .device-info-row .info-line strong {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 700;
+}
+
+/* "This Device" tag — shown only on the card matching the active session */
+.device-card .device-badge {
+  display: flex;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ========================================
+   SUPPORT PAGE
+   ======================================== */
+
+.support-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 20px;
+}
+
+.support-illustration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: rgba(255, 255, 255, 0.3);
+  margin-bottom: 8px;
+}
+
+.support-illustration img {
+  object-fit: contain;
+}
+
+.support-text {
+  text-align: center;
+  font-size: 28px;
+  color: #fff;
+  line-height: 1.5;
+
+}
+
+.support-contact-grid {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.support-contact-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 40px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  outline: none;
+  transition: all 0.15s;
+  min-width: 380px;
+  flex-direction: column;
+}
+
+.support-contact-card.focused {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.support-contact-card .contact-icon {
+  font-size: 24px;
+  color: var(--color-primary);
+  width: 36px;
+  text-align: center;
+}
+
+.support-contact-card .contact-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.support-contact-card .contact-text .contact-label {
+  display: none;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.support-contact-card .contact-text .contact-value {
+  font-size: 24px;
+  color: #fff;
+  font-weight: 500;
+}
+
+.support-version {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 10px;
+}
+
+/* ========================================
+   PRIVACY / TERMS PAGE
+   ======================================== */
+
+.privacy-title,
+.terms-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.privacy-subtitle,
+.terms-subtitle {
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 20px;
+  font-weight: 400;
+}
+
+.privacy-content,
+.terms-content {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.7;
+}
+
+.privacy-content p,
+.terms-content p {
+  margin-bottom: 14px;
+  padding: 0;
+}
+
+.privacy-content h3,
+.terms-content h3 {
+  font-size: 26px;
+  color: var(--color-primary);
+  margin: 20px 0 8px 0;
+  font-weight: 600;
+}
+
+/* ========================================
+   FAQ PAGE
+   ======================================== */
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.faq-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  overflow: hidden;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.faq-item.focused {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.faq-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  outline: none;
+  font-size: 22px;
+  color: #fff;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.faq-question .faq-arrow {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.3);
+  transition: transform 0.2s;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.faq-item.expanded .faq-arrow {
+  transform: rotate(180deg);
+  color: var(--color-primary);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.faq-answer-inner {
+  padding: 0 20px 16px 20px;
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+}
+
+.faq-item.expanded .faq-answer {
+  max-height: 400px;
+}
+
+/* ========================================
+   SIGN OUT CONFIRMATION OVERLAY
+   ======================================== */
+
+.signout-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.signout-overlay.hidden {
+  display: none;
+}
+
+.signout-modal {
+  position: relative;
+  width: 650px;
+  max-width: 85vw;
+  min-width: 45vw;
+  background: var(--bg-popup);
+  border-radius: var(--popup-radius);
+  padding: 50px 20px;
+  text-align: center;
+  box-shadow: var(--popup-shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: var(--popup-border);
+}
+
+.signout-modal .signout-icon {
+  font-size: 64px;
+  color: rgba(255, 255, 255, 0.2);
+  margin-bottom: 16px;
+}
+
+.signout-modal .signout-icon img {
+  object-fit: contain;
+}
+
+.signout-modal .signout-text {
+  font-size: 32px;
+  color: #fff;
+  margin-bottom: 30px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.signout-modal .signout-buttons {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.signout-modal .signout-buttons .btn-no {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 12px 40px;
+  font-size: 24px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s;
+  min-width: 140px;
+}
+
+.signout-modal .signout-buttons .btn-no.focused {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Primary (yellow) popup buttons: Yes / Submit / Verify */
+.signout-modal .signout-buttons .btn-yes,
+.delete-otp-verify-btn {
+  background: var(--color-primary);
+  border: none;
+  color: var(--color-on-primary);
+  padding: 12px 40px;
+  font-size: 24px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.signout-modal .signout-buttons .btn-yes.focused,
+.delete-otp-verify-btn.focused {
+  background: var(--color-primary-light);
+  outline: 2px solid #fff;
+  outline-offset: -4px;
+}
+
+.signout-modal .signout-buttons .btn-yes {
+  margin-left: 70px;
+  min-width: 140px;
+}
+
+/* ========================================
+   DELETE ACCOUNT OTP OVERLAY
+   (reuses .signout-overlay/.signout-modal shell above so it matches the
+   existing popup look; only the OTP-specific inner elements are new)
+   ======================================== */
+
+.delete-otp-modal {
+  max-width: 480px;
+}
+
+.delete-otp-subtext {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+
+/* 6 individual auto-tab digit boxes */
+.delete-otp-boxes {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* 6-digit boxes of both OTP overlays (Delete Account / Resume Subscription) */
+.delete-otp-box,
+.resume-otp-box {
+  width: 48px;
+  height: 58px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: #001325;
+  background: #eef3f8;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  outline: none;
+  padding: 0;
+  -moz-appearance: textfield;
+}
+
+.delete-otp-box::-webkit-outer-spin-button,
+.delete-otp-box::-webkit-inner-spin-button,
+.resume-otp-box::-webkit-outer-spin-button,
+.resume-otp-box::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.delete-otp-box.focused,
+.resume-otp-box.focused,
+.cancel-sub-password-input.focused {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-a35);
+}
+
+.delete-otp-error {
+  min-height: 20px;
+  font-size: 20px;
+  color: var(--color-error-text);
+  margin-bottom: 12px;
+}
+
+.delete-otp-verify-btn {
+  min-width: 160px;
+  margin: 0 auto 24px auto;
+  display: block;
+}
+
+.delete-otp-resend-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.delete-otp-resend-label {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.delete-otp-timer-text {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.delete-otp-timer-text.hidden {
+  display: none;
+}
+
+.delete-otp-resend-btn {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 8px 24px;
+  font-size: 20px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.delete-otp-resend-btn.disabled,
+.delete-otp-resend-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.delete-otp-resend-btn.hidden {
+  display: none;
+}
+
+.delete-otp-resend-btn.focused {
+  border-color: var(--color-primary);
+  background: var(--color-primary-a12);
+}
+
+/* On-screen numeric keypad shared by both OTP overlays
+   (2 rows x 6: 1-6 / 7 8 9 0 Backspace Clear) */
+.otp-keypad {
+  display: grid;
+  grid-template-columns: repeat(6, 56px);
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.otp-key {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s;
+}
+
+.otp-key-action {
+  font-size: 15px;
+}
+
+.otp-key.focused {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+/* ========================================
+   RENEW SUBSCRIPTION: OTP OVERLAY
+   (reuses .signout-overlay/.signout-modal shell + .delete-otp-modal /
+   .delete-otp-error / .delete-otp-verify-btn / .delete-otp-resend-*
+   classes above so it matches the existing OTP popup look. The digit
+   boxes get their own .resume-otp-box class — styled together with
+   .delete-otp-box above — so the two overlays' box queries never collide.)
+   ======================================== */
+
+/* ========================================
+   CANCEL SUBSCRIPTION: PASSWORD OVERLAY
+   (reuses .signout-overlay/.signout-modal shell above so it matches the
+   existing popup look; only the password-field-specific inner elements
+   are new)
+   ======================================== */
+
+.cancel-sub-password-modal {
+  max-width: 480px;
+}
+
+.cancel-sub-password-subtext {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 24px;
+  line-height: 1.4;
+}
+
+.cancel-sub-password-field {
+  margin-bottom: 10px;
+}
+
+.cancel-sub-password-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #001325;
+  background: #eef3f8;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  outline: none;
+}
+
+.cancel-sub-password-error {
+  min-height: 20px;
+  font-size: 20px;
+  color: var(--color-error-text);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+/* Focused state for scrollable pages (privacy, terms) */
+.content-card-body.focused {
+  outline-offset: -4px;
+}
+
+/* ========================================
+   SHARED FOCUS STYLES
+   ======================================== */
+
+.content-focusable {
+  outline: none;
+  transition: all 0.15s;
+}
+
+.subscription-section.focused .subscription-btn {
+  background: #eb575721;
+  border-color: var(--color-danger);
+}
+
+.subscription-section.focused .resume-subscription-btn {
+  background: var(--color-primary-a50);
+  border-color: var(--color-primary);
+}
+
+/* Remote focus lands on the whole Account Details card; the Subscription
+   card's own button is styled above and Card Details is never focusable. */
+.account-details-section.focused,
+.subscription-section.focused {
+  border-color: #fff;
+}

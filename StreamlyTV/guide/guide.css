@@ -1,0 +1,245 @@
+#main_guide_body {
+  background-color: var(--bg-main);
+  background-image: url('../images/onboarding_gradient.png');
+  margin: 0px;
+  background-size: cover;
+}
+
+/* Header bar layout comes from .header-container (css/streamly-tv.css) */
+
+.button_menu #privacy_popup:focus,
+.button_menu #help_popup:focus {
+  background-color: var(--color-primary) !important;
+  font-size: 35px;
+  font-weight: bold;
+  padding: 5px 25px;
+  color: var(--color-on-primary);
+  border-radius: 10px;
+  transition: background-size 0.5s ease;
+}
+
+#help_popup {
+  margin-left: 30px !important;
+}
+
+.button_menu button {
+  outline: none;
+  background-size: 200% 200%;
+  animation: zoom 0.5s ease forwards;
+  color: var(--color-primary);
+  font-size: 35px;
+  font-weight: bold;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  transition: background-size 0.5s ease;
+  padding: 5px 25px;
+  background-color: transparent !important;
+  border: 2px solid var(--color-primary);
+}
+
+@keyframes zoom {
+  0% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(1.1);
+  }
+}
+
+#signinbutton:focus {
+  outline: none;
+  background-size: 200% 200%;
+  animation: zoom 0.5s ease forwards;
+}
+
+#signinbutton {
+  font-size: 30px;
+  border-radius: 10px;
+  color: var(--color-on-primary);
+  margin: 8% 0 0px auto;
+  display: block;
+  padding: 15px 15%;
+  margin-right: auto;
+  background: var(--color-primary) !important;
+  transition: background-size 0.5s ease;
+}
+
+
+.carousel-wrapper .carousel_item {
+  color: white;
+
+}
+
+.carousel {
+  overflow: hidden;
+  width: 50%;
+  margin: 0 auto;
+  font-size: 32px;
+  text-align: center;
+  margin-top: 24%;
+  color: #ffff;
+
+}
+
+.carousel-item {
+  display: none;
+}
+
+.active {
+  display: block;
+}
+
+.carousel-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  top: 76%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+}
+
+.dot {
+  width: 35px;
+  height: 10px;
+  background-color: #bbb;
+  margin: 0 5px;
+  cursor: pointer;
+}
+
+.active-dot {
+  background-color: var(--color-primary);
+}
+
+.carousel_item {
+  min-height: 200px;
+}
+
+/* HELP MODAL START */
+
+#help_modal {
+  display: none;
+  position: absolute;
+  top: 22%;
+  left: 23%;
+  margin: 0px;
+  width: 60%;
+  text-align: center;
+}
+
+/* Shared popup shell for the Help and Privacy modals */
+#help_modal,
+#privacy_modal {
+  background: var(--bg-popup);
+  border: var(--popup-border);
+  border-radius: var(--popup-radius);
+  box-shadow: var(--popup-shadow);
+}
+
+#help_modal .ver-text {
+  color: grey;
+}
+
+#help_modal #help-close {
+  float: right;
+  padding: 5px 5px 0px 0;
+}
+
+#help_modal .help-text {
+  font-size: 23px;
+  color: #fff;
+  padding: 0px 40px;
+  font-weight: 700;
+}
+
+#help_modal .help-icons {
+  display: flex;
+  color: #fff;
+  font-size: 32px;
+  justify-content: space-evenly;
+  align-items: center;
+  margin: 0 0 20px 0px;
+}
+
+#help_modal .help-phone,
+#help_modal .help-mail {
+  width: 35%;
+  background: #FFFFFF33;
+  border-radius: 15px;
+  padding: 20px 0 0px 0;
+}
+
+
+
+/* HELP MODAL END */
+
+/* PRIVACY MODAL START */
+#privacy_modal {
+  display: none;
+  position: absolute;
+  top: 22%;
+  left: 23%;
+  margin: 0px;
+  width: 60%;
+  font-size: 26px;
+  line-height: 1.4;
+  color: #fff;
+  max-height: 70%;
+  overflow-y: scroll;
+  text-align: center;
+}
+
+#priok {
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+  min-width: 320px;
+  padding: 18px 90px;
+  margin: 10px auto 30px;
+  border: none;
+  border-radius: 10px;
+}
+
+#priok:focus {
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+/* OK stays hidden until the policy is scrolled to the end (guide.js).
+   visibility keeps its space so the scroll height doesn't change. */
+#priok.is-hidden {
+  visibility: hidden;
+}
+
+/* Visible yellow scrollbar comes from .scrollbar-primary (css/theme.css) so
+   the user can see how far through the policy they are; the global
+   ::-webkit-scrollbar rule below hides all others. */
+#privacy_modal::-webkit-scrollbar-track {
+  margin: 20px 0; /* keep clear of the rounded corners */
+}
+
+/* The modal box holds remote focus while reading; no focus ring on it */
+#privacy_modal:focus,
+#help_modal:focus {
+  outline: none;
+}
+
+#privacy_modal .privacy-text-wrap h4 {
+  text-align: center;
+}
+
+#privacy_modal .privacy-text-wrap p {
+  padding: 0 20px;
+}
+
+/* PRIVACY MODAL END */
+
+/* Hide scrollbars everywhere except .scrollbar-primary */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}

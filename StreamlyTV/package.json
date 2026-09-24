@@ -1,0 +1,19 @@
+{
+  "name": "streamlytv",
+  "version": "1.0.0",
+  "description": "http://your-ip/guide.html?demoMode=true&startTime=2015-11-07T07:00:00Z&guideInterval=24",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^9.39.5",
+    "globals": "^17.9.0"
+  }
+}

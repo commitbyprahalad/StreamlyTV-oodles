@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <!-- Google Analytics (GA4) + Tag Manager -->
+  <script src="../js/analytics.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamlyTV - Settings</title>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/all.min.css">
+  <link rel="stylesheet" href="../css/PopupManager.css">
+  <link rel="stylesheet" href="../css/LoadingManager.css">
+  <link rel="stylesheet" href="settings.css">
+</head>
+
+<body>
+  <!-- Loading Overlay -->
+  <div id="loading" class="settings-loading hidden">
+    <div class="loading-box">
+      <div class="loading-spinner"></div>
+      <p id="loading-text" class="loading-text">Loading...</p>
+    </div>
+  </div>
+
+  <!-- Sign Out Confirmation Overlay -->
+  <div id="signout-overlay" class="signout-overlay hidden">
+    <div class="signout-modal">
+      <div class="signout-icon">
+        <img src="../images/settings/logout-bg.png" alt="Streamly">
+      </div>
+      <div class="signout-text">Are you sure you want to logout from this device?</div>
+      <div class="signout-buttons">
+        <button class="btn-no" id="signout-btn-no" tabindex="0">No</button>
+        <button class="btn-yes" id="signout-btn-yes" tabindex="0">Yes, I'm Sure</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Account OTP Overlay (reuses the same overlay/modal shell as
+       #signout-overlay above so it matches existing popup styling) -->
+  <div id="delete-otp-overlay" class="signout-overlay hidden">
+    <div class="signout-modal delete-otp-modal">
+      <div class="signout-text">Verification Code</div>
+      <div class="delete-otp-subtext" id="delete-otp-subtext">OTP sent to your email. Enter it below to delete your
+        account.</div>
+      <div class="delete-otp-boxes" id="delete-otp-boxes">
+        <input type="text" inputmode="none" readonly pattern="[0-9]*" maxlength="1" class="delete-otp-box"
+          data-index="0" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          name="otp-digit-x1a">
+        <input type="text" inputmode="none" readonly pattern="[0-9]*" maxlength="1" class="delete-otp-box"
+          data-index="1" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          name="otp-digit-x2b">
+        <input type="text" inputmode="none" readonly pattern="[0-9]*" maxlength="1" class="delete-otp-box"
+          data-index="2" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          name="otp-digit-x3c">
+        <input type="text" inputmode="none" readonly pattern="[0-9]*" maxlength="1" class="delete-otp-box"
+          data-index="3" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          name="otp-digit-x4d">
+        <input type="text" inputmode="none" readonly pattern="[0-9]*" maxlength="1" class="delete-otp-box"
+          data-index="4" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          name="otp-digit-x5e">
+        <input type="text" inputmode="none" readonly pattern="[0-9]*" maxlength="1" class="delete-otp-box"
+          data-index="5" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          name="otp-digit-x6f">
+      </div>
+      <div class="delete-otp-error" id="delete-otp-error"></div>
+      <div class="otp-keypad" id="delete-otp-keypad"></div>
+      <button class="delete-otp-verify-btn" id="delete-otp-verify-btn" tabindex="0">Verify</button>
+      <div class="delete-otp-resend-row">
+        <span class="delete-otp-resend-label">Didn't receive your OTP?</span>
+        <span class="delete-otp-timer-text" id="delete-otp-timer-text">Resend code in 00:59</span>
+        <button class="delete-otp-resend-btn hidden" id="delete-otp-resend-btn" tabindex="-1" disabled>Resend
+          Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resume Subscription: OTP Verification Overlay (reuses the same
+       overlay/modal shell + box styling as #delete-otp-overlay so it
+       matches existing popup styling). Flow: Resume Subscription button ->
+       OTP sent (otp-send) -> this overlay -> Verify (otp-verify) -> confirm
+       popup (Yes/No) -> Yes -> subscription/resume API. -->
+  <div id="resume-sub-otp-overlay" class="signout-overlay hidden">
+    <div class="signout-modal delete-otp-modal">
+      <div class="signout-text">Verification Code</div>
+      <div class="delete-otp-subtext" id="resume-sub-otp-subtext">OTP sent to your email. Enter it below to renew
+        your subscription.</div>
+      <div class="delete-otp-boxes" id="resume-sub-otp-boxes">
+        <input type="text" inputmode="none" readonly pattern="[0-9]*" maxlength="1" class="resume-otp-box"
+          data-index="0" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          name="renew-otp-digit-y1a">
+        <input type="text" inputmode="none" readonly pattern="[0-9]*" maxlength="1" class="resume-otp-box"
+          data-index="1" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          name="renew-otp-digit-y2b">
+        <input type="text" inputmode="none" readonly pattern="[0-9]*" maxlength="1" class="resume-otp-box"
+          data-index="2" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          name="renew-otp-digit-y3c">
+        <input type="text" inputmode="none" readonly pattern="[0-9]*" maxlength="1" class="resume-otp-box"
+          data-index="3" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          name="renew-otp-digit-y4d">
+        <input type="text" inputmode="none" readonly pattern="[0-9]*" maxlength="1" class="resume-otp-box"
+          data-index="4" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          name="renew-otp-digit-y5e">
+        <input type="text" inputmode="none" readonly pattern="[0-9]*" maxlength="1" class="resume-otp-box"
+          data-index="5" tabindex="-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+          name="renew-otp-digit-y6f">
+      </div>
+      <div class="delete-otp-error" id="resume-sub-otp-error"></div>
+      <div class="otp-keypad" id="resume-sub-otp-keypad"></div>
+      <button class="delete-otp-verify-btn" id="resume-sub-otp-verify-btn" tabindex="0">Verify</button>
+      <div class="delete-otp-resend-row">
+        <span class="delete-otp-resend-label">Didn't receive your OTP?</span>
+        <span class="delete-otp-timer-text" id="resume-sub-otp-timer-text">Resend code in 00:59</span>
+        <button class="delete-otp-resend-btn hidden" id="resume-sub-otp-resend-btn" tabindex="-1" disabled>Resend
+          Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cancel Subscription: Password Verification Overlay (reuses the same
+       overlay/modal shell as #signout-overlay so it matches existing popup
+       styling). Flow: Cancel Subscription button -> enter password ->
+       Submit -> verify-password API -> confirm popup (Yes/No) -> Yes ->
+       cancel-subscription API. -->
+  <div id="cancel-sub-password-overlay" class="signout-overlay hidden">
+    <div class="signout-modal cancel-sub-password-modal">
+      <div class="signout-text">Confirm Your Password</div>
+      <div class="cancel-sub-password-subtext">Please enter your account password to continue cancelling your
+        subscription.</div>
+      <div class="cancel-sub-password-field">
+        <input type="password" id="cancel-sub-password-input" class="cancel-sub-password-input" tabindex="0"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Enter password"
+          name="cancel-sub-pwd-x9z">
+      </div>
+      <div class="cancel-sub-password-error" id="cancel-sub-password-error"></div>
+      <div class="signout-buttons">
+        <button class="btn-no" id="cancel-sub-password-cancel-btn" tabindex="0">Cancel</button>
+        <button class="btn-yes" id="cancel-sub-password-submit-btn" tabindex="0">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Settings Container -->
+  <div id="settings-container" class="settings-container">
+
+    <!-- Body: Sidebar + Content -->
+    <div class="settings-body">
+
+      <!-- Sidebar -->
+      <div class="settings-sidebar" id="settings-sidebar">
+        <!-- Back button -->
+        <div class="sidebar-back" id="sidebar-back" tabindex="0">
+          <i class="fas fa-arrow-left back-arrow"></i>
+          <span>Settings</span>
+        </div>
+
+        <!-- Menu Items -->
+        <div class="sidebar-menu" id="sidebar-menu">
+          <div class="menu-item focused" data-page="account" tabindex="0">
+            <img src="../images/settings/user-03.png" alt="Account" class="menu-icon">
+            <span class="menu-label">Account</span>
+          </div>
+          <div class="menu-item" data-page="device" tabindex="0">
+            <img src="../images/settings/devices.png" alt="Devices" class="menu-icon">
+            <span class="menu-label">Devices</span>
+          </div>
+          <div class="menu-item" data-page="support" tabindex="0">
+            <img src="../images/settings/24-support.svg" alt="Support" class="menu-icon">
+            <span class="menu-label">Support</span>
+          </div>
+          <div class="menu-item" data-page="privacy" tabindex="0">
+            <img src="../images/settings/file-05.png" alt="Privacy" class="menu-icon">
+            <span class="menu-label">Privacy and Policy</span>
+          </div>
+          <div class="menu-item" data-page="terms" tabindex="0">
+            <img src="../images/settings/terms.svg" alt="Terms" class="menu-icon">
+            <span class="menu-label">Terms of Use</span>
+          </div>
+          <div class="menu-item" data-page="faq" tabindex="0">
+            <img src="../images/settings/annotation-question.svg" alt="FAQ" class="menu-icon">
+            <span class="menu-label">FAQ</span>
+          </div>
+          <div class="menu-item signout-item" data-page="signout" tabindex="0">
+            <img src="../images/settings/log-out-01.png" alt="Sign Out" class="menu-icon">
+            <span class="menu-label">Sign Out</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Area -->
+      <div class="settings-content" id="settings-content">
+        <div class="content-card">
+          <div class="content-card-header" id="content-card-header">
+            <div class="page-title" id="page-title">Account</div>
+          </div>
+          <div class="content-card-body" id="page-container">
+            <!-- Pages are rendered dynamically here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/api-config.js"></script>
+  <script src="../js/auth-session.js"></script>
+  <script src="../js/PopupManager.js"></script>
+  <script src="../js/LoadingManager.js"></script>
+  <script src="../js/internet-monitor.js"></script>
+  <script src="settings.js"></script>
+</body>
+
+</html>

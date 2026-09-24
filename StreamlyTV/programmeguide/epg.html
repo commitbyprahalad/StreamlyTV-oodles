@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <!-- Google Analytics (GA4) + Tag Manager -->
+  <script src="../js/analytics.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamlyTV - Electronic Program Guide</title>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="modern-epg.css">
+  <link rel="stylesheet" href="../css/PopupManager.css">
+  <link rel="stylesheet" href="../css/LoadingManager.css">
+</head>
+
+<body>
+
+  <!-- Loading Indicator -->
+  <div id="loading" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p>Loading channels...</p>
+  </div>
+
+  <!-- Main EPG Container -->
+  <div id="epg-container" class="epg-container">
+
+    <!-- Header Bar -->
+    <div class="epg-header">
+
+      <div class="header-left">
+        <img src="../images/streamly logo 5.png" alt="StreamlyTV" class="app-logo">
+        <button id="live-btn" class="live-button">GO LIVE</button>
+        <!-- <div id="current-time" class="current-time">Loading...</div> -->
+      </div>
+
+      <div class="header-right">
+        <button id="settings-btn" class="icon-button">
+          <img src="../images/Icons/settings-02.png" alt="Settings">
+        </button>
+      </div>
+    </div>
+
+    <!-- EPG Grid -->
+    <div class="epg-grid">
+
+      <!-- Left Sidebar: Channel List -->
+      <div class="channel-sidebar" id="channel-sidebar">
+        <!-- Channels will be dynamically inserted here -->
+      </div>
+
+      <!-- Right: Timeline + Programs -->
+      <div class="timeline-container">
+
+        <!-- Time Header -->
+        <div class="time-header" id="time-header">
+          <!-- Time slots will be dynamically inserted here -->
+        </div>
+
+        <!-- Program Grid -->
+        <div class="program-grid" id="program-grid">
+          <!-- Program rows will be dynamically inserted here -->
+        </div>
+
+        <!-- Live Indicator Line -->
+        <div class="live-indicator" id="live-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Program Details Modal -->
+  <div id="program-modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close">×</button>
+
+      <div class="modal-body">
+        <div class="modal-poster">
+          <img id="modal-image" src="" alt="Program">
+        </div>
+
+        <div class="modal-info">
+          <h1 id="modal-title">Program Title</h1>
+          <div class="modal-meta">
+            <span id="modal-channel">Channel Name</span>
+            <span class="separator">•</span>
+            <span id="modal-time">7:00 PM - 8:00 PM</span>
+          </div>
+
+          <div class="modal-badges">
+            <span class="badge" id="modal-duration">1 HR 30 MIN</span>
+            <span class="badge" id="modal-quality">HD 1080i</span>
+          </div>
+
+          <p id="modal-description" class="modal-description">
+            Program description will appear here...
+          </p>
+
+          <div class="modal-genre">
+            <span class="genre-label">Genre:</span>
+            <span id="modal-genre-text">Drama</span>
+          </div>
+
+          <button id="modal-play-btn" class="play-button">
+            <img src="../images/Icons/play-circle.png" alt="Play">
+            Play Now
+          </button>
+
+          <div class="modal-schedule">
+            <h3>Upcoming Schedule</h3>
+            <div id="modal-schedule-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Place this BEFORE the closing </body> tag, AFTER all EPG modals -->
+
+  <div id="player-modal" class="player-modal hidden">
+    <video id="video-player"></video>
+    <img src="../images/streamly logo 5.png" alt="logo" class="player-logo" style="display: none;">
+
+    <div id="player-spinner" class="player-spinner hidden">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="player-controls" class="player-controls">
+      <div class="play-pause-icon">
+        <img id="play-icon" src="../images/Icons/play-icon.png" alt="Play">
+        <img id="pause-icon" src="../images/Icons/pause-icon.png" alt="Pause" class="hidden">
+      </div>
+    </div>
+
+    <div id="player-error" class="player-error hidden">
+      <p>Technical issue. Please try again later.</p>
+      <button id="player-retry">Retry</button>
+    </div>
+
+    <!-- Now Playing Info Overlay (UP key) -->
+    <div id="now-playing-overlay" class="now-playing-overlay hidden">
+      <div class="npo-logo-wrap">
+        <img id="npo-channel-logo" src="" alt="Channel" class="npo-channel-logo">
+      </div>
+      <div class="npo-info">
+        <!-- <div class="npo-live-badge">LIVE</div> -->
+        <div id="npo-title" class="npo-title">—</div>
+        <!-- <div id="npo-time" class="npo-time"></div> -->
+        <div id="npo-meta" class="npo-meta"></div>
+        <div id="npo-desc" class="npo-desc"></div>
+      </div>
+    </div>
+    <!-- Channel List Overlay (LEFT / RIGHT / CH+ CH- keys while player is active) -->
+    <div id="player-channel-list" class="player-ch-list hidden">
+      <div class="pch-track" id="pch-track">
+        <!-- channel cards injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- PopupManager handles all popups (logout, exit, session, no-internet) dynamically -->
+
+  <!-- Scripts -->
+  <script src="../js/api-config.js"></script>
+  <script src="../js/auth-session.js"></script>
+  <script src="../js/PopupManager.js"></script>
+  <script src="../js/LoadingManager.js"></script>
+  <script src="../js/internet-monitor.js"></script>
+  <script src="../js/geolocation.js"></script>
+  <script src="modern-epg-core.js"></script>
+  <script src="modern-epg-ui.js"></script>
+  <script src="modern-epg-player.js"></script>
+  <script src="modern-epg-keyboard.js"></script>
+  <script src="epg-auto-reload.js"></script>
+  <!-- dash.js is only needed at play time; async keeps its 700KB parse off the guide's first render -->
+  <script async src="../js/dash.min.js"></script>
+</body>
+
+</html>

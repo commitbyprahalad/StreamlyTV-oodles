@@ -1,0 +1,123 @@
+/**
+ * PopupManager — Unified Popup System for StreamlyTV
+ * Samsung Tizen TV Web App — Styles
+ *
+ * Single source of truth for all popup visuals.
+ * Colours come from css/theme.css (--bg-popup, --color-primary).
+ */
+
+/* ── Overlay ─────────────────────────────────────────────────────────────── */
+.pm-overlay {
+    display: none;
+    position: fixed;
+    z-index: 99999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-overlay);
+    justify-content: center;
+    align-items: center;
+    /* backdrop-filter not supported on older Tizen TVs — safe fallback to solid
+       semi-transparent background above */
+}
+
+.pm-overlay.pm-active {
+    display: flex;
+}
+
+/* ── Box ────────────────────────────────────────────────────────────────── */
+.pm-box {
+    position: relative;
+    width: 650px;
+    max-width: 85vw;
+    min-width: 45vw;
+    max-height: 340px;
+    background: var(--bg-popup);
+    border-radius: var(--popup-radius);
+    padding: 50px 20px;
+    text-align: center;
+    box-shadow: var(--popup-shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: var(--popup-border);
+}
+
+/* gap fallback for older TV browsers */
+.pm-box>*+* {
+    margin-top: 28px;
+}
+
+/* ── Icon ───────────────────────────────────────────────────────────────── */
+.pm-icon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pm-icon img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* ── Message ────────────────────────────────────────────────────────────── */
+.pm-message {
+    color: #ffffff;
+    font-size: 32px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0;
+    padding: 0 10px;
+}
+
+/* ── Button Row ─────────────────────────────────────────────────────────── */
+.pm-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 8px;
+}
+
+/* gap fallback for older TV browsers */
+.pm-buttons>*+* {
+    margin-left: 40px;
+}
+
+/* ── Base Button ────────────────────────────────────────────────────────── */
+.pm-btn {
+    min-width: 160px;
+    padding: 14px 32px;
+    font-size: 28px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+
+    /* DEFAULT: outline only */
+    background-color: transparent;
+    color: #ffffff;
+    border: 3px solid #ffffff;
+    outline: none;
+}
+
+/* ── Focused / Hover Button ─────────────────────────────────────────────── */
+.pm-btn.pm-focused,
+.pm-btn:focus,
+.pm-btn:hover {
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+    border: 3px solid var(--color-primary);
+    outline: none;
+}
+
+.pm-btn.pm-focused,
+.pm-btn:focus {
+    box-shadow: 0 0 0 3px var(--color-primary-a35);
+}

@@ -1,0 +1,43 @@
+/* NEW COMMAN CSS START */
+.header-container {
+  display: flex;
+  background-image: url('../images/streamly/top-menu-bg.png');
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 40px;
+}
+
+#body_wrapper .body {
+  margin: 0;
+}
+
+/* NEW COMMAN CSS END */
+
+
+/* ─── Splash / Loading Screen ─────────────────────────────── */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.splash {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  object-fit: cover;
+  background-color: var(--bg-main);
+}
+
+.splashlogo {
+  position: absolute;
+  top: 440px;
+  left: 562px;
+  width: 796px;
+  height: 200px;
+}

@@ -1,0 +1,1100 @@
+/* ========================================
+   MODERN EPG STYLES - OPTIMIZED VERSION
+   ======================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', 'Helvetica', sans-serif;
+    background: var(--bg-main);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* ========================================
+   LOADING
+   ======================================== */
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+/* Page loader + player buffering spinner */
+.loading-spinner,
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 6px solid #333;
+    border-top: 6px solid var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-spinner {
+    margin-bottom: 20px;
+}
+
+.loading-overlay p {
+    color: white;
+    font-size: 18px;
+}
+
+.loading-overlay.hidden {
+    display: none;
+}
+
+/* ========================================
+   MAIN EPG CONTAINER
+   ======================================== */
+
+.epg-container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-main);
+}
+
+/* ========================================
+   HEADER BAR
+   ======================================== */
+
+.epg-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 15px 30px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.header-left>*+* {
+    margin-left: 20px;
+}
+
+.app-logo {
+    height: 50px;
+    width: auto;
+    display: none;
+}
+
+.live-button {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border: none;
+    padding: 10px 25px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.live-button.focused {
+    border: 4px solid #fff;
+    transform: scale(1.05);
+}
+
+.live-button.is-live {
+    background: var(--color-live);
+    color: #fff;
+}
+
+/* .current-time {
+    color: white;
+    font-size: 18px;
+    font-weight: 500;
+} */
+
+.header-right {
+    display: flex;
+    margin-left: 50px;
+}
+
+.header-right>*+* {
+    margin-left: 15px;
+}
+
+.icon-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.icon-button img {
+    width: 24px;
+    height: 24px;
+}
+
+.icon-button.focused {
+    border: 4px solid #fff;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ========================================
+   EPG GRID LAYOUT
+   ======================================== */
+
+.epg-grid {
+    display: flex;
+    height: calc(100vh - 85px);
+    overflow: hidden;
+}
+
+/* ========================================
+   CHANNEL SIDEBAR (LEFT)
+   ======================================== */
+
+.channel-sidebar {
+    width: 170px;
+    background: rgba(0, 0, 0, 0.4);
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.channel-sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Day Indicator at top of sidebar */
+.day-indicator {
+    position: sticky;
+    top: 0;
+    background: rgb(16 32 60);
+    color: white;
+    padding: 3.4px 10px;
+    text-align: center;
+    z-index: 1000;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.day-text {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.date-text {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* ========================================
+   CHANNEL ITEMS - FIXED LAYOUT
+   ======================================== */
+
+.channel-item {
+    height: 125px;
+    background: rgba(30, 60, 114, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    /* colours only: animating border width forced a re-layout on every focus move */
+    transition: background-color 0.2s, border-color 0.2s;
+    position: relative;
+    padding: 2px;
+}
+
+/* Channel Number - Top Left Corner with Background */
+.channel-number {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-size: 16px;
+    color: #fff;
+    font-weight: bold;
+    border-radius: 4px;
+    z-index: 2;
+    line-height: 1;
+}
+
+/* Channel Logo - Large and Centered */
+.channel-logo {
+    width: 85%;
+    max-width: 140px;
+    height: 85px;
+    object-fit: contain;
+}
+
+/* Channel Info Container */
+.channel-info {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.channel-name {
+    display: none;
+}
+
+/* Channel Focused State */
+.channel-item.channel-focused {
+    border: 2px solid #fff;
+    background: rgba(50, 80, 140, 0.9);
+}
+
+/* ========================================
+   TIMELINE CONTAINER (RIGHT)
+   ======================================== */
+
+.timeline-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ========================================
+   TIME HEADER
+   ======================================== */
+
+.time-header {
+    display: flex;
+    background: rgba(0, 0, 0, 0.5);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    overflow-x: scroll;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.time-header::-webkit-scrollbar {
+    display: none;
+}
+
+.time-slot {
+    min-width: 300px;
+    width: 300px;
+    padding: 15px 10px;
+    text-align: left;
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ========================================
+   PROGRAM GRID
+   ======================================== */
+
+.program-grid {
+    flex: 1;
+    overflow-x: scroll;
+    overflow-y: scroll;
+    position: relative;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.program-grid::-webkit-scrollbar {
+    display: none;
+}
+
+/* Program Row */
+.program-row {
+    height: 125px;
+    position: relative;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+}
+
+/* ========================================
+   PROGRAM CARDS
+   ======================================== */
+
+.program-card {
+    position: absolute;
+    top: 0;
+    height: 125px;
+    background: #0d2847;
+    padding: 8px 10px;
+    cursor: pointer;
+    /* colours only: animating border width forced a re-layout on every focus move */
+    transition: background-color 0.2s, border-color 0.2s;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Program Title */
+.program-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+/* Program Time */
+.program-time {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: 6px;
+    font-weight: 400;
+}
+
+/* Program Meta Row (Type + Duration on same line) */
+.program-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+}
+
+.program-type {
+    font-size: 14px;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.program-duration {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 400;
+    text-align: right;
+}
+
+/* Live Program - only the elapsed part (card's left edge up to the
+   live-indicator line) is shaded; width is set by updateElapsedShading() */
+.program-elapsed {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    background: #aeaebd1f;
+    pointer-events: none;
+}
+
+/* Focused card's 2px border shifts the padding box; pull the shade back so
+   its right edge still lines up with the live-indicator line */
+.program-card.program-focused .program-elapsed {
+    margin-left: -2px;
+}
+
+/* Keep card text above the elapsed shade */
+.program-title,
+.program-time,
+.program-meta {
+    position: relative;
+}
+
+/* Focused Program - White Border Only */
+.program-card.program-focused {
+    border: 2px solid #fff;
+    background: #1a3a5c;
+    z-index: 5;
+}
+
+/* No-data fallback card (empty program array) */
+/* .program-card.no-data-card {
+    background: #091d38;
+    opacity: 0.75;
+    cursor: default;
+} */
+
+
+.program-card.no-data-card .program-time {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* ========================================
+   LIVE INDICATOR LINE (Inside EPG Grid Only)
+   ======================================== */
+
+.live-indicator {
+    position: absolute;
+    top: 130px;
+    bottom: 0;
+    width: 2px;
+    background: #d8d6c796;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.live-indicator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -3px;
+    width: 8px;
+    height: 8px;
+    background: var(--color-primary);
+    border-radius: 50%;
+}
+
+/* ========================================
+   PROGRAM DETAILS MODAL
+   ======================================== */
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-overlay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 40px;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: var(--bg-popup);
+    border-radius: var(--popup-radius);
+    max-width: 1400px;
+    width: 95%;
+    height: 85vh;
+    position: relative;
+    border: var(--popup-border);
+    box-shadow: var(--popup-shadow);
+    display: flex;
+    overflow: hidden;
+}
+
+.modal-close {
+    position: absolute;
+    top: 190px;
+    right: 179px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    font-size: 28px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+    display: flex;
+    width: 80%;
+    height: 65%;
+}
+
+/* Left Side - Poster and Details */
+.modal-left {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    overflow-y: auto;
+}
+
+.modal-left>*+* {
+    margin-left: 30px;
+}
+
+.modal-poster {
+    flex-shrink: 0;
+}
+
+.modal-poster img {
+    width: 320px;
+    height: 480px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-info {
+    flex: 1;
+    color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-info h1 {
+    font-size: 32px;
+    margin-bottom: 10px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.modal-subtitle {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 20px;
+    font-weight: 400;
+}
+
+.modal-meta {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.modal-meta>*+* {
+    margin-left: 15px;
+}
+
+.modal-badges {
+    display: flex;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.modal-badges>*+* {
+    margin-left: 12px;
+}
+
+.badge {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.badge.genre {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.modal-description {
+    font-size: 15px;
+    line-height: 1.7;
+    margin-bottom: 30px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.modal-genre {
+    margin-bottom: 25px;
+    font-size: 14px;
+}
+
+.genre-label {
+    color: rgba(255, 255, 255, 0.6);
+    margin-right: 8px;
+}
+
+.play-button {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border: none;
+    padding: 14px 35px;
+    font-size: 17px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    margin-bottom: 30px;
+    transition: all 0.3s;
+}
+
+.play-button>*+* {
+    margin-left: 12px;
+}
+
+.play-button:hover {
+    background: var(--color-primary-light);
+    transform: scale(1.05);
+}
+
+.play-button img {
+    width: 24px;
+    height: 24px;
+}
+
+/* Right Side - Schedule Panel */
+.modal-right {
+    width: 400px;
+    border-left: 2px solid rgba(255, 255, 255, 0.15);
+    padding: 30px;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+
+.modal-schedule {
+    color: white;
+}
+
+.modal-schedule-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-schedule-header>*+* {
+    margin-left: 10px;
+}
+
+.modal-schedule-header img {
+    width: 24px;
+    height: 24px;
+}
+
+.modal-schedule h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.schedule-day-section {
+    margin-bottom: 25px;
+}
+
+.schedule-day-section h4 {
+    font-size: 14px;
+    color: var(--color-primary);
+    margin-bottom: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.schedule-day-section .day-date {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 12px;
+}
+
+.schedule-times {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.schedule-times>*+* {
+    margin-left: 8px;
+}
+
+.schedule-time-chip {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.schedule-time-chip.live {
+    background: #ff0000;
+    border-color: #ff0000;
+}
+
+.separator {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Scrollbar styling */
+.modal-left::-webkit-scrollbar,
+.modal-right::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-left::-webkit-scrollbar-track,
+.modal-right::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.modal-left::-webkit-scrollbar-thumb,
+.modal-right::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.modal-left::-webkit-scrollbar-thumb:hover,
+.modal-right::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* ========================================
+   RESPONSIVE TWEAKS
+   ======================================== */
+
+@media (max-width: 1280px) {
+    .channel-sidebar {
+        width: 100px;
+    }
+
+    .channel-logo {
+        height: 45px;
+    }
+
+    .time-slot {
+        min-width: 250px;
+        width: 250px;
+    }
+}
+
+/* ========================================
+   VIDEO PLAYER MODAL (ABOVE EPG)
+   ======================================== */
+
+.player-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: #000 !important;
+    z-index: 10000 !important;
+    display: block !important;
+}
+
+.player-modal.hidden {
+    display: none !important;
+}
+
+#video-player {
+    width: 100vw !important;
+    height: 100vh !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    background-color: black !important;
+    z-index: 10001 !important;
+}
+
+.player-logo {
+    position: absolute !important;
+    top: 15px !important;
+    left: 15px !important;
+    opacity: 0.4 !important;
+    width: 150px !important;
+    z-index: 10002 !important;
+}
+
+.player-spinner {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10003 !important;
+}
+
+.player-spinner.hidden {
+    display: none !important;
+}
+
+.player-error {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    background: var(--bg-popup) !important;
+    border: var(--popup-border) !important;
+    box-shadow: var(--popup-shadow) !important;
+    color: white !important;
+    padding: 40px !important;
+    border-radius: var(--popup-radius) !important;
+    text-align: center !important;
+    z-index: 10004 !important;
+}
+
+.player-error.hidden {
+    display: none !important;
+}
+
+.player-error p {
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.player-error button {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.player-controls {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 10003 !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s !important;
+}
+
+.player-controls.show {
+    opacity: 1 !important;
+}
+
+.player-controls img {
+    width: 80px;
+    height: 80px;
+}
+
+.player-controls .hidden {
+    display: none !important;
+}
+
+/* ========================================
+   NOW PLAYING INFO OVERLAY
+   ======================================== */
+
+.now-playing-overlay {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    background: var(--bg-popup) !important;
+    display: flex !important;
+    align-items: flex-start;
+    z-index: 10005 !important;
+    box-sizing: border-box !important;
+    animation: npo-slide-up 0.25s ease-out !important;
+}
+
+.now-playing-overlay>*+* {
+    margin-left: 30px !important;
+}
+
+.now-playing-overlay.hidden {
+    display: none !important;
+}
+
+@keyframes npo-slide-up {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.npo-logo-wrap {
+    flex-shrink: 0;
+    width: 150px;
+    height: 190px;
+    background: var(--bg-main);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.npo-channel-logo {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.npo-info {
+    flex: 1;
+    color: #fff;
+    display: flex;
+    padding-top: 10px;
+    flex-direction: column;
+}
+
+.npo-info>*+* {
+    margin-top: 7px;
+}
+
+.npo-live-badge {
+    display: inline-block;
+    background: var(--color-live);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    width: fit-content;
+}
+
+.npo-title {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.npo-time {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.npo-meta {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.npo-meta>*+* {
+    margin-left: 10px;
+}
+
+.npo-meta .npo-badge {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.npo-desc {
+    font-size: 20px;
+    color: #fff;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ========================================
+   PLAYER CHANNEL LIST OVERLAY
+   ======================================== */
+
+.player-ch-list {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    padding: 40px 50px 30px !important;
+    z-index: 10010 !important;
+    box-sizing: border-box !important;
+    animation: pch-slide-up 0.22s ease-out !important;
+    /* Outer clip container — this does the cropping */
+    overflow: hidden !important;
+}
+
+.player-ch-list.hidden {
+    display: none !important;
+}
+
+@keyframes pch-slide-up {
+    from {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Scrolling track — must NOT have overflow:hidden so all cards exist in layout */
+.pch-track {
+    display: flex !important;
+    align-items: flex-end !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+    transition: transform 0.25s ease !important;
+    will-change: transform !important;
+}
+
+.pch-track>*+* {
+    margin-left: 14px !important;
+}
+
+/* Each channel card */
+.pch-card {
+    flex-shrink: 0 !important;
+    width: 160px !important;
+    height: 220px !important;
+    background: var(--bg-popup);
+    border-radius: 10px !important;
+    border: 0px solid rgba(255, 255, 255, 0.18) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.pch-card:hover {
+    border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Focused (selected) card — enlarged with gold border */
+.pch-card.pch-focused {
+    width: 170px !important;
+    height: 230px !important;
+    border: 3px solid var(--color-primary) !important;
+    box-shadow: 0 0 18px var(--color-primary-a50) !important;
+    transform: translateY(-8px) !important;
+}
+
+/* Channel number badge — top left */
+.pch-num {
+    position: absolute !important;
+    top: 18px !important;
+    left: 18px !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+    line-height: 1 !important;
+}
+
+/* Channel logo */
+.pch-logo {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+}

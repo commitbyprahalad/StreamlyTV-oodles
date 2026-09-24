@@ -1,0 +1,46 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+*.wgt
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Coverage
+coverage/
+
+
+# Tizen packages
+*.wgt
+
+# Build files
+build/
+dist/
+
+# Temporary files
+tmp/
+temp/
+
+# Logs
+*.log
+
+# Node dependencies
+node_modules/
+
+# Large media
+*.mp4
+*.mov

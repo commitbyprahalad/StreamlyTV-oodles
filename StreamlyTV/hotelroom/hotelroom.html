@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="x-ua-compatible" content="IE=Edge">
+  <meta charset="utf-8">
+  <!-- Google Analytics (GA4) + Tag Manager -->
+  <script src="../js/analytics.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+  <script type="text/javascript" src="$WEBAPIS/webapis/webapis.js"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" type="text/css" href="../css/all.min.css" />
+  <title>Select Room — Streamly</title>
+  <link rel="stylesheet" href="hotelroom.css">
+  <link rel="stylesheet" href="../css/PopupManager.css">
+  <link rel="stylesheet" href="../css/LoadingManager.css">
+  <link rel="icon" type="image/png" href="../images/icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+  <!-- Background overlay -->
+  <div class="bg-overlay"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <img src="../images/streamly logo 5.png" alt="Streamly" class="logo">
+    </div>
+    <div class="header-center">
+      <span class="room-count" id="room-count"></span>
+      <h1 class="page-title">Hotel Login Streamly on your TV select room</h1>
+    </div>
+    <div class="header-right">
+      <button class="logout-btn" id="logout">Logout</button>
+    </div>
+  </header>
+
+  <!-- Search Bar -->
+  <div class="search-section">
+    <div class="search-wrap">
+      <i class="fa fa-search search-icon"></i>
+      <input type="text" id="search" class="search-input" placeholder="Enter keyword (e.g. Rooms)" autocomplete="off" />
+    </div>
+  </div>
+
+  <!-- Room Grid -->
+  <main class="grid-section">
+    <div id="room-grid" class="room-grid"></div>
+  </main>
+
+  <!-- LoadingManager handles spinner dynamically -->
+
+  <!-- PopupManager + LoadingManager handle popups dynamically -->
+
+  <script src="../js/api-config.js"></script>
+  <script src="../js/PopupManager.js"></script>
+  <script src="../js/LoadingManager.js"></script>
+  <script src="../js/auth-session.js"></script>
+  <script src="hotelroom.js"></script>
+</body>
+
+</html>
