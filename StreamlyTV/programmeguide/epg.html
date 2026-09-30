@@ -116,6 +116,8 @@
   <!-- Place this BEFORE the closing </body> tag, AFTER all EPG modals -->
 
   <div id="player-modal" class="player-modal hidden">
+    <!-- Samsung AVPlay surface (primary engine); <video> is the dash.js fallback -->
+    <object id="av-player" type="application/avplayer" class="av-player"></object>
     <video id="video-player"></video>
     <img src="../images/streamly logo 5.png" alt="logo" class="player-logo" style="display: none;">
 
@@ -159,6 +161,8 @@
   <!-- PopupManager handles all popups (logout, exit, session, no-internet) dynamically -->
 
   <!-- Scripts -->
+  <!-- Samsung TV web APIs (AVPlay) -->
+  <script src="$WEBAPIS/webapis/webapis.js"></script>
   <script src="../js/api-config.js"></script>
   <script src="../js/auth-session.js"></script>
   <script src="../js/PopupManager.js"></script>
@@ -170,8 +174,7 @@
   <script src="modern-epg-player.js"></script>
   <script src="modern-epg-keyboard.js"></script>
   <script src="epg-auto-reload.js"></script>
-  <!-- dash.js is only needed at play time; async keeps its 700KB parse off the guide's first render -->
-  <script async src="../js/dash.min.js"></script>
+  <!-- dash.js (fallback player) is loaded on demand by modern-epg-player.js -->
 </body>
 
 </html>

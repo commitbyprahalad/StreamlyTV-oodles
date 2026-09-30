@@ -149,7 +149,6 @@ body {
   font-weight: 400;
   padding-left: 72px;
   outline: none;
-  backdrop-filter: blur(8px);
 }
 
 .search-input::placeholder {
@@ -159,6 +158,7 @@ body {
 .search-input:focus,
 .search-input.focused {
   border-color: var(--yellow);
+  box-shadow: var(--focus-glow);
   background: rgba(0, 68, 128, 0.5);
 }
 
@@ -202,12 +202,12 @@ body {
   height: 240px;
   border-radius: var(--border-radius);
   border: 2px solid rgba(255, 255, 255, 0.08);
+  /* no backdrop-filter: blur on every card made grid scrolling stutter on TVs */
   background: linear-gradient(140deg, rgba(0, 68, 128, 0.6) 0%, rgba(0, 39, 73, 0.85) 100%);
-  backdrop-filter: blur(4px);
   overflow: hidden;
   flex-shrink: 0;
   cursor: pointer;
-  transition: border-color 0.1s, transform 0.1s;
+  transition: border-color var(--focus-duration), transform var(--focus-duration), box-shadow var(--focus-duration);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -231,6 +231,8 @@ body {
 
 .room-card.focused {
   border-color: var(--yellow);
+  /* glow only: the grid is exactly 5 cards wide, a scale would clip the edges */
+  box-shadow: var(--focus-glow);
 }
 
 .room-card.focused::before {

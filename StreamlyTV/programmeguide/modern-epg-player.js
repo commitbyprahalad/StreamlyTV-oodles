@@ -9,9 +9,25 @@
  * - Bridge: window.PlayerModule exposed for legacy auto-play script
  * - Channel direct play + Program modal play both work
  * - Session heartbeat + inactivity check while player is active
+ *
+ * ENGINES:
+ * - Samsung AVPlay (webapis.avplay) is the primary engine: native hardware
+ *   pipeline, faster start and smoother channel changes than MSE/dash.js.
+ * - dash.js on <video> is the fallback. If AVPlay can't start a stream
+ *   (open/prepare/DRM error or no start within AVPLAY_START_TIMEOUT), the
+ *   same stream is retried with dash.js and AVPlay is skipped for the rest
+ *   of the app session. dash.js is only downloaded when that happens.
+ *   Set AVPLAY_ENABLED to false to go back to dash.js only.
  */
 
 EPG.player = {
+    AVPLAY_ENABLED: true,
+    AVPLAY_START_TIMEOUT: 12000,
+    AVPLAY_UNAVAILABLE_KEY: 'avplay_unavailable', // sessionStorage
+
+    engine: null,             // 'avplay' | 'dash' — engine of the current stream
+    avObject: null,           // <object type="application/avplayer">
+    _loadToken: 0,            // bumped per stream so late callbacks are ignored
     dashPlayer: null,
     videoElement: null,
     modal: null,
@@ -42,11 +58,13 @@ EPG.player = {
         this.error = document.getElementById('player-error');
         this.controls = document.getElementById('player-controls');
         this.nowPlayingOverlay = document.getElementById('now-playing-overlay');
+        this.avObject = document.getElementById('av-player');
 
-        console.log('[PLAYER] init — videoElement:', !!this.videoElement, 'modal:', !!this.modal, 'spinner:', !!this.spinner, 'error:', !!this.error);
+        console.log('[PLAYER] init — videoElement:', !!this.videoElement, 'avplay:', this.canUseAVPlay(), 'modal:', !!this.modal, 'spinner:', !!this.spinner, 'error:', !!this.error);
 
         this.dashPlayer = null;
         this.setupEventListeners();
+        this.setupAppLifecycle();
 
         // ✅ Bridge for legacy auto-play script that uses window.PlayerModule
         window.PlayerModule = {
@@ -82,6 +100,28 @@ EPG.player = {
         }
 
         // console.log('✅ Player event listeners attached');
+    },
+
+    // AVPlay must be suspended when the app goes to the background (Home,
+    // source switch, multitasking) and restored when it comes back; the page
+    // leaving must release the native player.
+    setupAppLifecycle: function () {
+        const self = this;
+        document.addEventListener('visibilitychange', function () {
+            if (self.engine !== 'avplay' || !self.isActive) return;
+            try {
+                if (document.hidden) {
+                    webapis.avplay.suspend();
+                } else {
+                    webapis.avplay.restore();
+                }
+            } catch (e) {
+                console.warn('[PLAYER] AVPlay suspend/restore failed:', e);
+            }
+        });
+        window.addEventListener('pagehide', function () {
+            self.destroyPlayer();
+        });
     },
 
     /**
@@ -182,6 +222,11 @@ EPG.player = {
 
     // Properly destroy previous player instance
     destroyPlayer: function () {
+        this._loadToken++; // late AVPlay / license callbacks of the old stream are ignored
+        this.stopAVPlay();
+        this.setAVPlayMode(false);
+        this.engine = null;
+
         if (this.dashPlayer) {
             try {
                 this.dashPlayer.pause();
@@ -203,9 +248,224 @@ EPG.player = {
         clearTimeout(this.bufferingTimeout);
     },
 
-    // Create a fresh dash.js instance and load the stream
+    // Load a stream with AVPlay, or dash.js when AVPlay isn't usable.
     loadStream: function (streamUrl, drmData, widevineLicense) {
-        console.log('[PLAYER] loadStream() — starting');
+        if (this.canUseAVPlay()) {
+            this.loadAVPlay(streamUrl, drmData, widevineLicense);
+        } else {
+            this.loadDashStream(streamUrl, drmData, widevineLicense);
+        }
+    },
+
+    // ── AVPlay engine ──────────────────────────────────────────────────────
+
+    canUseAVPlay: function () {
+        if (!this.AVPLAY_ENABLED || !this.avObject) return false;
+        try {
+            if (sessionStorage.getItem(this.AVPLAY_UNAVAILABLE_KEY) === '1') return false;
+        } catch (e) { /* storage unavailable: just try AVPlay */ }
+        return typeof webapis !== 'undefined' && !!webapis.avplay;
+    },
+
+    // AVPlay draws on the TV's video plane *under* the web page, so while it
+    // plays everything behind the overlays must be transparent: the player
+    // modal, the page background and the EPG (hidden, not removed, so its
+    // scroll/focus state is kept for when the player closes).
+    setAVPlayMode: function (on) {
+        const root = document.documentElement;
+        if (root && root.classList) root.classList.toggle('avplay-mode', on);
+    },
+
+    stopAVPlay: function () {
+        if (this.engine !== 'avplay') return;
+        try {
+            const state = webapis.avplay.getState();
+            if (state !== 'NONE' && state !== 'IDLE') webapis.avplay.stop();
+            webapis.avplay.close();
+        } catch (e) {
+            console.warn('[PLAYER] AVPlay stop/close failed:', e);
+        }
+    },
+
+    loadAVPlay: function (streamUrl, drmData, widevineLicense) {
+        const self = this;
+        const av = webapis.avplay;
+        const token = this._loadToken;
+        let started = false;
+        let fellBack = false;
+
+        this.engine = 'avplay';
+        this.setAVPlayMode(true);
+        console.log('[PLAYER] loadAVPlay() — starting');
+
+        function stale() {
+            return !self.isActive || token !== self._loadToken;
+        }
+
+        // Couldn't start with AVPlay: replay the same stream with dash.js
+        // and stay on dash.js for the rest of this app session.
+        function fallBackToDash(reason) {
+            if (stale() || fellBack) return;
+            fellBack = true; // late AVPlay events after stop() must not start dash.js twice
+            console.warn('[PLAYER] AVPlay could not start (' + reason + ') — falling back to dash.js');
+            try { sessionStorage.setItem(self.AVPLAY_UNAVAILABLE_KEY, '1'); } catch (e) { /* not persisted */ }
+            clearTimeout(self.bufferingTimeout);
+            self.stopAVPlay();
+            self.setAVPlayMode(false);
+            self.engine = null;
+            self.loadDashStream(streamUrl, drmData, widevineLicense);
+        }
+
+        // Before the first frame, any failure falls back to dash.js; once the
+        // stream is playing, failures are stream problems -> Retry screen.
+        function fail(reason) {
+            if (stale()) return;
+            if (started) {
+                console.error('[PLAYER] AVPlay error while playing:', reason);
+                self.showError();
+            } else {
+                fallBackToDash(reason);
+            }
+        }
+
+        try {
+            av.open(streamUrl);
+            av.setDisplayRect(0, 0, window.innerWidth || 1920, window.innerHeight || 1080);
+            av.setListener({
+                onbufferingstart: function () {
+                    if (stale() || !started) return;
+                    self.showSpinner();
+                    clearTimeout(self.bufferingTimeout);
+                    self.bufferingTimeout = setTimeout(function () {
+                        if (!stale()) self.showError();
+                    }, 30000);
+                },
+                onbufferingcomplete: function () {
+                    if (stale() || !started) return;
+                    clearTimeout(self.bufferingTimeout);
+                    self.hideSpinner();
+                },
+                onstreamcompleted: function () {
+                    fail('stream completed');
+                },
+                onerror: function (eventType) {
+                    fail('onerror ' + eventType);
+                },
+                ondrmevent: function (drmEvent, drmInfo) {
+                    self.onAVPlayDrmEvent(drmInfo, token, fail);
+                },
+                onevent: function (eventType, eventData) {
+                    console.log('[PLAYER] AVPlay event:', eventType, eventData);
+                }
+            });
+            if (drmData && widevineLicense) {
+                this._drm = { licenseUrl: widevineLicense, customData: drmData };
+                av.setDrm('WIDEVINE_CDM', 'SetProperties', JSON.stringify({
+                    AppSession: 'streamly-' + Date.now(),
+                    DataType: 'MPEG-DASH'
+                }));
+            } else {
+                this._drm = null;
+            }
+        } catch (e) {
+            fail('open: ' + (e && (e.name || e.message)));
+            return;
+        }
+
+        clearTimeout(this.bufferingTimeout);
+        this.bufferingTimeout = setTimeout(function () {
+            fail('no start within ' + self.AVPLAY_START_TIMEOUT + 'ms');
+        }, this.AVPLAY_START_TIMEOUT);
+
+        av.prepareAsync(function () {
+            if (stale()) return;
+            try {
+                av.play();
+            } catch (e) {
+                fail('play: ' + (e && (e.name || e.message)));
+                return;
+            }
+            started = true;
+            clearTimeout(self.bufferingTimeout);
+            self.hideSpinner();
+            self.hideError();
+            console.log('[PLAYER] AVPlay playing');
+        }, function (err) {
+            fail('prepare: ' + (err && (err.name || err.message)));
+        });
+    },
+
+    // Widevine with AVPlay: the player hands us the licence challenge and we
+    // POST it ourselves, with the same `customdata` header dash.js sends.
+    onAVPlayDrmEvent: function (drmInfo, token, fail) {
+        const self = this;
+        if (!drmInfo || token !== this._loadToken) return;
+
+        if (drmInfo.name === 'DrmError') {
+            fail('DRM error ' + (drmInfo.code || drmInfo.message || ''));
+            return;
+        }
+        if (drmInfo.name !== 'Challenge' || !this._drm) return;
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', this._drm.licenseUrl, true);
+        xhr.responseType = 'arraybuffer';
+        xhr.setRequestHeader('customdata', this._drm.customData);
+        xhr.timeout = 10000;
+        xhr.onload = function () {
+            if (token !== self._loadToken) return;
+            if (xhr.status !== 200 || !xhr.response) {
+                fail('licence HTTP ' + xhr.status);
+                return;
+            }
+            try {
+                webapis.avplay.setDrm('WIDEVINE_CDM', 'widevine_license_data', self._arrayBufferToBase64(xhr.response));
+            } catch (e) {
+                fail('licence apply: ' + (e && (e.name || e.message)));
+            }
+        };
+        xhr.onerror = function () { fail('licence network error'); };
+        xhr.ontimeout = function () { fail('licence timeout'); };
+        try {
+            xhr.send(this._base64ToBytes(drmInfo.challenge));
+        } catch (e) {
+            fail('licence request: ' + (e && e.message));
+        }
+    },
+
+    _base64ToBytes: function (b64) {
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return bytes;
+    },
+
+    _arrayBufferToBase64: function (buffer) {
+        const bytes = new Uint8Array(buffer);
+        let bin = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) {
+            bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        }
+        return btoa(bin);
+    },
+
+    // ── dash.js engine (fallback) ──────────────────────────────────────────
+
+    // dash.js is ~700KB, so it is only fetched the first time it's needed.
+    _ensureDashScript: function () {
+        if (typeof dashjs !== 'undefined' || this._dashScriptRequested) return;
+        this._dashScriptRequested = true;
+        const script = document.createElement('script');
+        script.src = '../js/dash.min.js';
+        script.async = true;
+        document.body.appendChild(script);
+    },
+
+    // Create a fresh dash.js instance and load the stream
+    loadDashStream: function (streamUrl, drmData, widevineLicense) {
+        console.log('[PLAYER] loadDashStream() — starting');
+        this.engine = 'dash';
+        this._ensureDashScript();
 
         if (!this.videoElement) {
             console.error('[PLAYER] FAIL: videoElement not found');
@@ -222,8 +482,8 @@ EPG.player = {
                 const self = this;
                 clearTimeout(this._dashWaitTimer);
                 this._dashWaitTimer = setTimeout(function () {
-                    if (self.isActive && localStorage.getItem('channelUrl') === streamUrl) {
-                        self.loadStream(streamUrl, drmData, widevineLicense);
+                    if (self.isActive && self.engine === 'dash' && localStorage.getItem('channelUrl') === streamUrl) {
+                        self.loadDashStream(streamUrl, drmData, widevineLicense);
                     }
                 }, 200);
                 return;
@@ -536,6 +796,21 @@ EPG.player = {
 
     // Toggle play / pause
     togglePlayPause: function () {
+        if (this.engine === 'avplay') {
+            try {
+                const state = webapis.avplay.getState();
+                if (state === 'PLAYING') {
+                    webapis.avplay.pause();
+                    this.showControls('play');
+                } else if (state === 'PAUSED') {
+                    webapis.avplay.play();
+                    this.showControls('pause');
+                }
+            } catch (e) {
+                console.warn('[PLAYER] AVPlay play/pause failed:', e);
+            }
+            return;
+        }
         if (!this.videoElement || !this.dashPlayer) return;
 
         if (this.videoElement.paused) {

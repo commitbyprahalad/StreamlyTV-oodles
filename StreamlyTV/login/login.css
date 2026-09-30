@@ -65,6 +65,7 @@
 .login-input:focus {
   outline: none;
   border-bottom-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px var(--color-primary), var(--focus-glow);
 }
 
 /* ── Login button (Task 3: grey/white default, yellow/black when focused) ── */
@@ -187,8 +188,8 @@ p {
 }
 
 .eye-toggle-btn:focus {
-  border-color: #fff;
-  color: #fff;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
   border-radius: 4px;
 }
 
@@ -486,7 +487,8 @@ FORGOT PASSWORD SCREEN — matches Figma design
   align-items: center;
   justify-content: center;
   z-index: 500;
-  background: rgba(0, 0, 0, 0.35);
+  /* same dimmed backdrop as every other popup (PopupManager) */
+  background: var(--bg-overlay);
 }
 
 .forgot-password-box {
@@ -494,9 +496,10 @@ FORGOT PASSWORD SCREEN — matches Figma design
   max-width: 90%;
   background: var(--bg-popup);
   border: var(--popup-border);
-  border-radius: 28px;
+  border-radius: var(--popup-radius);
   padding: 48px 44px;
   color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
   box-shadow: var(--popup-shadow);
   box-sizing: border-box;
 }
@@ -576,15 +579,16 @@ FORGOT PASSWORD SCREEN — matches Figma design
   background: rgba(255, 255, 255, 0.18) !important;
 }
 
+/* Same button look as PopupManager (.pm-btn): outlined until focused */
 .fp-submit-btn {
   width: 100%;
   min-height: 62px;
-  background: #7c8895;
+  background: transparent;
   color: #fff;
   font-weight: 700;
   font-size: 24px;
-  border: none;
-  border-radius: 10px;
+  border: 3px solid #fff;
+  border-radius: 8px;
   cursor: pointer;
   outline: none;
   letter-spacing: 0.5px;
@@ -592,9 +596,9 @@ FORGOT PASSWORD SCREEN — matches Figma design
 
 .fp-submit-btn:focus {
   background: var(--color-primary);
+  border-color: var(--color-primary);
   color: var(--color-on-primary);
-  outline: 3px solid #fff;
-  outline-offset: -6px;
+  box-shadow: 0 0 0 3px var(--color-primary-a35);
 }
 
 #fp-email {

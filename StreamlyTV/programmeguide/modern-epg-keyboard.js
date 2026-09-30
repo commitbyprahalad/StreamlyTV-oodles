@@ -33,7 +33,9 @@ EPG.focus = {
         backKeyCount: 0, // ⭐ Progressive BACK counter
         lastKeyTime: 0,
         KEY_REPEAT_DELAY: 100, // Increased from 80 to 100 for smoother navigation
-        playedFromLiveProgram: false // true when user directly played a live program cell
+        playedFromLiveProgram: false, // true when user directly played a live program cell
+        focusTime: null, // UP/DOWN anchor time (sec), valid while focusAnchorEl is focused
+        focusAnchorEl: null
     },
 
     // DOM element cache
@@ -222,6 +224,7 @@ EPG.focus = {
         this.state.currentContext = 'CHANNEL';
         this.state.channelIndex = index;
         this.state.programIndex = -1;
+        this.state.focusTime = null;
 
         const channel = channels[index];
         if (channel) {
@@ -292,6 +295,42 @@ EPG.focus = {
         }
     },
 
+    // Time UP/DOWN should stay on: the focused programme's start, clamped
+    // to the left edge of the grid (a live show that began hours ago still
+    // anchors at "now"). Kept across UP/DOWN so short shows don't drift it.
+    getFocusTime: function () {
+        const program = this.getPrograms(this.state.channelIndex)[this.state.programIndex];
+        // Anchor only survives UP/DOWN moves; any other focus change re-derives it
+        if (this.state.focusTime !== null && program && program === this.state.focusAnchorEl) {
+            return this.state.focusTime;
+        }
+        const start = program ? parseInt(program.getAttribute('data-start'), 10) : 0;
+        if (!start) return null; // no-data card: fall back to index matching
+        const gridStart = (EPG.state && EPG.state.firstSlotTime) || 0;
+        return Math.max(start, gridStart);
+    },
+
+    keepFocusAnchor: function (time) {
+        this.state.focusTime = time;
+        this.state.focusAnchorEl = this.getPrograms(this.state.channelIndex)[this.state.programIndex] || null;
+    },
+
+    // Index of the programme on `channelIndex` airing at `time`, else the
+    // next one after it, else the last; index-based when times are unknown.
+    findProgramIndexAt: function (channelIndex, time, fallbackIndex) {
+        const programs = this.getPrograms(channelIndex);
+        if (programs.length === 0) return -1;
+        if (time === null) return Math.max(0, Math.min(fallbackIndex, programs.length - 1));
+
+        for (let i = 0; i < programs.length; i++) {
+            const start = parseInt(programs[i].getAttribute('data-start'), 10) || 0;
+            const end = parseInt(programs[i].getAttribute('data-end'), 10) || 0;
+            if (!start && !end) return Math.max(0, Math.min(fallbackIndex, programs.length - 1));
+            if (time < end) return i; // first programme not yet over at `time`
+        }
+        return programs.length - 1;
+    },
+
     // Navigate UP
     navigateUp: function () {
         if (!this.canNavigate()) return;
@@ -307,9 +346,10 @@ EPG.focus = {
                 this.focusLiveButton();
             } else {
                 if (this.state.currentContext === 'PROGRAM') {
-                    const newPrograms = this.getPrograms(this.state.channelIndex - 1);
-                    const newIndex = Math.min(this.state.programIndex, newPrograms.length - 1);
+                    const time = this.getFocusTime();
+                    const newIndex = this.findProgramIndexAt(this.state.channelIndex - 1, time, this.state.programIndex);
                     this.focusProgram(this.state.channelIndex - 1, Math.max(0, newIndex));
+                    this.keepFocusAnchor(time);
                 } else {
                     this.focusChannel(this.state.channelIndex - 1);
                 }
@@ -338,9 +378,10 @@ EPG.focus = {
         } else if (this.state.currentContext === 'CHANNEL' || this.state.currentContext === 'PROGRAM') {
             if (this.state.channelIndex < totalChannels - 1) {
                 if (this.state.currentContext === 'PROGRAM') {
-                    const newPrograms = this.getPrograms(this.state.channelIndex + 1);
-                    const newIndex = Math.min(this.state.programIndex, newPrograms.length - 1);
+                    const time = this.getFocusTime();
+                    const newIndex = this.findProgramIndexAt(this.state.channelIndex + 1, time, this.state.programIndex);
                     this.focusProgram(this.state.channelIndex + 1, Math.max(0, newIndex));
+                    this.keepFocusAnchor(time);
                 } else {
                     this.focusChannel(this.state.channelIndex + 1);
                 }
@@ -356,6 +397,7 @@ EPG.focus = {
         if (this.state.currentContext === 'SETTINGS') {
             this.focusLiveButton();
         } else if (this.state.currentContext === 'PROGRAM') {
+            this.state.focusTime = null;
             if (this.state.programIndex > 0) {
                 this.focusProgram(this.state.channelIndex, this.state.programIndex - 1);
             } else {
@@ -380,6 +422,7 @@ EPG.focus = {
                 this.focusProgram(this.state.channelIndex, 0);
             }
         } else if (this.state.currentContext === 'PROGRAM') {
+            this.state.focusTime = null;
             programs = this.getPrograms(this.state.channelIndex);
             if (this.state.programIndex < programs.length - 1) {
                 this.focusProgram(this.state.channelIndex, this.state.programIndex + 1);

@@ -107,12 +107,13 @@ body {
     font-weight: bold;
     border-radius: 5px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: transform var(--focus-duration), box-shadow var(--focus-duration);
 }
 
+/* White ring (the button itself is yellow/red) drawn outside, no size change */
 .live-button.focused {
-    border: 4px solid #fff;
-    transform: scale(1.05);
+    transform: scale(var(--focus-scale));
+    box-shadow: 0 0 0 4px #fff, var(--focus-glow);
 }
 
 .live-button.is-live {
@@ -141,7 +142,7 @@ body {
     padding: 10px;
     border-radius: 5px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: transform var(--focus-duration), border-color var(--focus-duration), background-color var(--focus-duration);
 }
 
 .icon-button img {
@@ -150,8 +151,10 @@ body {
 }
 
 .icon-button.focused {
-    border: 4px solid #fff;
-    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--color-primary);
+    background: var(--color-primary-a35);
+    transform: scale(var(--focus-scale));
+    box-shadow: var(--focus-glow);
 }
 
 /* ========================================
@@ -525,6 +528,17 @@ body {
     height: 65%;
 }
 
+/* showProgramModal() rebuilds #program-modal without the .modal-content
+   wrapper, so the popup box (background) lives on the body itself —
+   otherwise the guide shows through behind the text. */
+#program-modal > .modal-body {
+    background: var(--bg-popup);
+    border: var(--popup-border);
+    border-radius: var(--popup-radius);
+    box-shadow: var(--popup-shadow);
+    overflow: hidden;
+}
+
 /* Left Side - Poster and Details */
 .modal-left {
     flex: 1;
@@ -637,16 +651,20 @@ body {
     align-items: center;
     align-self: flex-start;
     margin-bottom: 30px;
-    transition: all 0.3s;
+    transition: transform var(--focus-duration), box-shadow var(--focus-duration);
 }
 
 .play-button>*+* {
     margin-left: 12px;
 }
 
-.play-button:hover {
+.play-button:hover,
+.play-button:focus,
+.modal:not(.hidden) .play-button {
+    /* OK in the programme modal presses this button, so it always shows as focused */
     background: var(--color-primary-light);
-    transform: scale(1.05);
+    transform: scale(var(--focus-scale));
+    box-shadow: 0 0 0 4px #fff, var(--focus-glow);
 }
 
 .play-button img {
@@ -1065,20 +1083,18 @@ body {
     justify-content: center !important;
     position: relative !important;
     cursor: pointer !important;
-    transition: all 0.2s ease !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
 }
 
 .pch-card:hover {
     border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
-/* Focused (selected) card — enlarged with gold border */
+/* Focused (selected) card — enlarged with gold ring. Scaled, not resized,
+   so moving through the strip never re-lays out the other cards. */
 .pch-card.pch-focused {
-    width: 170px !important;
-    height: 230px !important;
-    border: 3px solid var(--color-primary) !important;
-    box-shadow: 0 0 18px var(--color-primary-a50) !important;
-    transform: translateY(-8px) !important;
+    box-shadow: inset 0 0 0 3px var(--color-primary), var(--focus-glow) !important;
+    transform: translateY(-8px) scale(1.06) !important;
 }
 
 /* Channel number badge — top left */
@@ -1097,4 +1113,40 @@ body {
     width: 100% !important;
     height: 100% !important;
     object-fit: contain !important;
+}
+/* ========================================
+   AVPLAY (Samsung native player)
+   AVPlay renders on the video plane under the web page: while it plays,
+   the page must be see-through behind the player overlays.
+   ======================================== */
+
+.av-player {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10001;
+}
+
+html.avplay-mode .av-player {
+    display: block;
+}
+
+html.avplay-mode,
+html.avplay-mode body,
+html.avplay-mode .player-modal {
+    background: transparent !important;
+}
+
+html.avplay-mode #video-player {
+    display: none !important;
+}
+
+/* Hidden (not removed) so EPG scroll + focus state survive until the player closes */
+html.avplay-mode .epg-container,
+html.avplay-mode #program-modal,
+html.avplay-mode #loading {
+    visibility: hidden;
 }

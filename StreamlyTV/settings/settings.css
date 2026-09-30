@@ -163,7 +163,7 @@ body {
   outline: none;
   font-size: 28px;
   color: #fff;
-  transition: all 0.15s;
+  transition: background-color var(--focus-duration), box-shadow var(--focus-duration);
   border-bottom: 2px solid rgba(255, 255, 255, 0.04);
   position: relative;
 }
@@ -434,6 +434,15 @@ body {
   outline-offset: 2px;
 }
 
+/* Resume is already yellow: focus keeps it yellow and adds a white ring */
+.subscription-btn.resume-subscription-btn.focused {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+  box-shadow: var(--focus-glow);
+}
+
 /* Card Details section — informational only, never focusable (no
    .focused border rule, unlike account-details); shell shared above */
 .card-detail-field {
@@ -493,7 +502,7 @@ body {
 
 .device-card.focused {
   border-color: var(--color-primary);
-  outline-offset: 2px;
+  box-shadow: var(--focus-glow);
 }
 
 /* Default Logout Button */
@@ -622,7 +631,8 @@ body {
 }
 
 .support-contact-card.focused {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--color-primary-a12);
+  box-shadow: var(--focus-ring), var(--focus-glow);
 }
 
 .support-contact-card .contact-icon {
@@ -718,8 +728,9 @@ body {
 }
 
 .faq-item.focused {
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: var(--color-primary);
   background: rgba(255, 255, 255, 0.08);
+  box-shadow: var(--focus-glow);
 }
 
 .faq-question {
@@ -828,7 +839,7 @@ body {
 
 .signout-modal .signout-buttons .btn-no {
   background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 3px solid #fff;
   color: #fff;
   padding: 12px 40px;
   font-size: 24px;
@@ -840,13 +851,17 @@ body {
   min-width: 140px;
 }
 
-.signout-modal .signout-buttons .btn-no.focused {
-  border-color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+/* Same as PopupManager (.pm-btn): outlined until focused, then yellow */
+.signout-modal .signout-buttons .btn-no.focused,
+.signout-modal .signout-buttons .btn-yes.focused {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-a35);
 }
 
-/* Primary (yellow) popup buttons: Yes / Submit / Verify */
-.signout-modal .signout-buttons .btn-yes,
+/* Primary (yellow) popup button: Verify */
 .delete-otp-verify-btn {
   background: var(--color-primary);
   border: none;
@@ -860,7 +875,6 @@ body {
   transition: all 0.15s;
 }
 
-.signout-modal .signout-buttons .btn-yes.focused,
 .delete-otp-verify-btn.focused {
   background: var(--color-primary-light);
   outline: 2px solid #fff;
@@ -868,6 +882,16 @@ body {
 }
 
 .signout-modal .signout-buttons .btn-yes {
+  background: transparent;
+  border: 3px solid #fff;
+  color: #fff;
+  padding: 12px 40px;
+  font-size: 24px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  transition: background-color var(--focus-duration), border-color var(--focus-duration), color var(--focus-duration);
   margin-left: 70px;
   min-width: 140px;
 }
@@ -1079,9 +1103,11 @@ body {
   text-align: center;
 }
 
-/* Focused state for scrollable pages (privacy, terms) */
+/* Focused state for scrollable pages (privacy, terms): subtle ring so the
+   user knows UP/DOWN scrolls this text */
 .content-card-body.focused {
-  outline-offset: -4px;
+  box-shadow: inset 0 0 0 2px var(--color-primary-a50);
+  border-radius: 10px;
 }
 
 /* ========================================

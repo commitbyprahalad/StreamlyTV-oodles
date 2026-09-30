@@ -35,6 +35,15 @@
   --popup-radius: 18px;
   --popup-border: 2px solid rgba(255, 255, 255, 0.15);
   --popup-shadow: 0 8px 48px rgba(0, 0, 0, 0.7);
+
+  /* ── Remote focus (10-foot UI) ──
+     One focus look for every screen: yellow ring + soft glow. Rings are
+     drawn with box-shadow so focusing never changes an element's size
+     (no re-layout, no jumping neighbours). */
+  --focus-ring: inset 0 0 0 4px var(--color-primary);
+  --focus-glow: 0 0 18px var(--color-primary-a50);
+  --focus-scale: 1.05;
+  --focus-duration: 0.12s;
 }
 
 /* ── Shared spinner animation (settings, EPG, device) ── */

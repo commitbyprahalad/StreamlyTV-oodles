@@ -1,1 +1,0 @@
-http://your-ip/guide.html?demoMode=true&startTime=2015-11-07T07:00:00Z&guideInterval=24

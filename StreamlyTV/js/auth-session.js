@@ -27,6 +27,36 @@ const AuthSession = (function () {
         });
     }
 
+    // ─── Subscription screen (expired / renewal failed) ─────────────────
+    // Set while the user is logged in but blocked on the subscription
+    // module, so index.html reopens that screen instead of the EPG.
+    const SUBSCRIPTION_BLOCKED_KEY = 'subscription_blocked';
+
+    function goToSubscriptionScreen() {
+        localStorage.setItem(SUBSCRIPTION_BLOCKED_KEY, '1');
+        window.location.href = '../subscription/subscription.html';
+    }
+
+    function isSubscriptionBlocked() {
+        return localStorage.getItem(SUBSCRIPTION_BLOCKED_KEY) === '1';
+    }
+
+    // Post-login routing, driven by what login stored in localStorage:
+    // device name -> hotel room (non-custom tier users) -> EPG.
+    function continueAfterLogin() {
+        localStorage.removeItem(SUBSCRIPTION_BLOCKED_KEY);
+
+        if (localStorage.getItem('personaldevicename_popup') === 'true') {
+            window.location.href = '../personaldevice/personaldevice.html';
+            return;
+        }
+        if (localStorage.getItem('userrole') === 'tieruser' && localStorage.getItem('is_custom_user') === '0') {
+            window.location.href = '../hotelroom/hotelroom.html';
+            return;
+        }
+        window.location.href = '../programmeguide/epg.html';
+    }
+
     // ─── Check API JSON response for auth errors ─────────────────────────
     // Returns true if an auth error was handled, false otherwise.
     function checkApiResponse(data) {
@@ -129,6 +159,9 @@ const AuthSession = (function () {
     return {
         handleSessionExpired: handleSessionExpired,
         handleSubscriptionExpired: handleSubscriptionExpired,
+        goToSubscriptionScreen: goToSubscriptionScreen,
+        isSubscriptionBlocked: isSubscriptionBlocked,
+        continueAfterLogin: continueAfterLogin,
         checkApiResponse: checkApiResponse,
         addToRecentCheck: addToRecentCheck
     };

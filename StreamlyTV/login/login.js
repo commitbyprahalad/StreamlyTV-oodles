@@ -348,9 +348,8 @@ function login() {
                 return;
             }
 
-            if (data.response_code === 410) {
-                hideLoader();
-                AuthSession.handleSubscriptionExpired(data.subscribedmsgis || data.message);
+            if (Number(data.response_code) === 410) {
+                handleSubscriptionExpiredLogin(data, email, device);
                 return;
             }
 
@@ -415,9 +414,8 @@ function loginWithPasscode() {
                 return;
             }
 
-            if (data.response_code === 410) {
-                hideLoader();
-                AuthSession.handleSubscriptionExpired(data.subscribedmsgis || data.message);
+            if (Number(data.response_code) === 410) {
+                handleSubscriptionExpiredLogin(data, responseEmail, device);
                 return;
             }
 
@@ -673,9 +671,8 @@ function completeQRLogin() {
             }
 
             // Same subscription-expired convention as email/passcode
-            if (data.response_code === 410) {
-                hideLoader();
-                AuthSession.handleSubscriptionExpired(data.subscribedmsgis || data.message);
+            if (Number(data.response_code) === 410) {
+                handleSubscriptionExpiredLogin(data, responseEmail, device);
                 return;
             }
 
@@ -733,11 +730,10 @@ function showForgotPasswordScreen() {
         clearQRTimeout();
     }
 
-    const loginWrapper = document.querySelector('.login-wrapper');
     const fpWrapper = document.getElementById('forgot-password-wrapper');
     const fpEmail = document.getElementById('fp-email');
 
-    if (loginWrapper) loginWrapper.style.display = 'none';
+    // Login stays visible, dimmed behind the popup (same as other popups)
     if (fpWrapper) fpWrapper.style.display = 'flex';
     if (fpEmail) fpEmail.value = '';
 
@@ -908,6 +904,46 @@ function fetchWithRetry(url, options, retries, delay) {
 // gets stored in localStorage and where the user is redirected to next.
 // =============================================================================
 
+// Everything later screens read from localStorage after a login.
+function saveLoginSession(data, email, uid, version) {
+    localStorage.setItem("user_id", String(data.user.id));
+    localStorage.setItem("email", sanitize(email));
+    localStorage.setItem("deviceid", sanitize(uid));
+    localStorage.setItem("version", sanitize(version));
+    localStorage.setItem("personaldeviceid", sanitize(data.personaldeviceid));
+    localStorage.setItem("devicetype", sanitize(data.device_type));
+    localStorage.setItem("userrole", sanitize(data.userrole));
+    localStorage.setItem("is_custom_user", String(data.user.is_custom_user));
+    localStorage.setItem("user_type", sanitize(data.user.user_type || ""));
+    localStorage.setItem("jwt token", data.access_token);
+    localStorage.setItem("rooms", JSON.stringify(data.rooms || []));
+    localStorage.setItem("personaldevicename_popup", data.personaldevicename_popup ? "true" : "false");
+    localStorage.setItem("devicename", sanitize(data.devicename || ""));
+
+    // Save zipcode from login response if available
+    if (data.user && data.user.zipcode) {
+        localStorage.setItem('streamly_zipcode', data.user.zipcode);
+    }
+}
+
+// 410 on login: the account is valid but the subscription is expired or its
+// auto-renewal failed. The response still carries a token, so keep the
+// session and open the subscription module (custom plan request or QR
+// renewal) before any other screen. Without a token there's nothing to
+// renew with, so fall back to the old "expired" popup.
+function handleSubscriptionExpiredLogin(data, email, device) {
+    hideLoader();
+    if (!data.access_token || !data.user) {
+        AuthSession.handleSubscriptionExpired(data.subscribedmsgis || data.message);
+        return;
+    }
+    saveLoginSession(data, email, device.uid, device.version);
+    if (data.qrcode) {
+        localStorage.setItem("subscription_qrcode", data.qrcode);
+    }
+    AuthSession.goToSubscriptionScreen();
+}
+
 function handleLoginResponse(data, email, uid, version) {
 
     if (data.response_code === 479) {
@@ -934,40 +970,8 @@ function handleLoginResponse(data, email, uid, version) {
         return;
     }
 
-    localStorage.setItem("user_id", String(data.user.id));
-    localStorage.setItem("email", sanitize(email));
-    localStorage.setItem("deviceid", sanitize(uid));
-    localStorage.setItem("version", sanitize(version));
-    localStorage.setItem("personaldeviceid", sanitize(data.personaldeviceid));
-    localStorage.setItem("devicetype", sanitize(data.device_type));
-    localStorage.setItem("userrole", sanitize(data.userrole));
-    localStorage.setItem("is_custom_user", String(data.user.is_custom_user));
-    localStorage.setItem("user_type", sanitize(data.user.user_type || ""));
-    localStorage.setItem("jwt token", data.access_token);
-    localStorage.setItem("rooms", JSON.stringify(data.rooms || []));
-    localStorage.setItem("personaldevicename_popup", data.personaldevicename_popup ? "true" : "false");
-    localStorage.setItem("devicename", sanitize(data.devicename || ""));
-
-    // Save zipcode from login response if available
-    if (data.user && data.user.zipcode) {
-        localStorage.setItem('streamly_zipcode', data.user.zipcode);
-    }
-
-    if (data.personaldevicename_popup === true) {
-        location.href = "../personaldevice/personaldevice.html";
-        return;
-    }
-
-    if (data.userrole === "tieruser") {
-        if (data.user.is_custom_user === 0) {
-            location.href = "../hotelroom/hotelroom.html";
-            return;
-        }
-        location.href = "../programmeguide/epg.html";
-        return;
-    }
-
-    location.href = "../programmeguide/epg.html";
+    saveLoginSession(data, email, uid, version);
+    AuthSession.continueAfterLogin();
 }
 
 // =============================================================================

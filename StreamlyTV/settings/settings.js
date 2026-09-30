@@ -1764,6 +1764,21 @@ const Settings = (function () {
     }, 50);
   }
 
+  // BACK on an OTP screen (Delete Account / Resume Subscription): ask before
+  // abandoning the process. "No" (the default focus, and BACK inside the
+  // popup) leaves the OTP screen open with the digits entered so far;
+  // PopupManager then returns focus to the OTP pad element that had it.
+  function confirmStopOtpProcess(processName, closeOverlay) {
+    PopupManager.showConfirm(
+      "Are you sure you want to stop the " + processName + " process?",
+      function (confirmed) {
+        if (confirmed) closeOverlay();
+      },
+      "Yes",
+      "No",
+    );
+  }
+
   function closeDeleteOtpOverlay() {
     state.isDeleteOtpOpen = false;
     clearDeleteOtpTimer();
@@ -3072,7 +3087,9 @@ const Settings = (function () {
       resendBtn: dom.deleteOtpResendBtn,
       onVerify: verifyDeleteOtp,
       onResend: resendDeleteOtp,
-      onClose: closeDeleteOtpOverlay,
+      onClose: function () {
+        confirmStopOtpProcess("Delete Account", closeDeleteOtpOverlay);
+      },
     });
     if (dom.deleteOtpVerifyBtn) {
       dom.deleteOtpVerifyBtn.addEventListener("click", verifyDeleteOtp);
@@ -3093,7 +3110,9 @@ const Settings = (function () {
       resendBtn: dom.resumeSubOtpResendBtn,
       onVerify: verifyResumeSubOtp,
       onResend: resendResumeSubOtp,
-      onClose: closeResumeSubOtpOverlay,
+      onClose: function () {
+        confirmStopOtpProcess("Resume Subscription", closeResumeSubOtpOverlay);
+      },
     });
     if (dom.resumeSubOtpVerifyBtn) {
       dom.resumeSubOtpVerifyBtn.addEventListener("click", verifyResumeSubOtp);

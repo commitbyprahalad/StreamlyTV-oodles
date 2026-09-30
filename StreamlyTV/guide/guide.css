@@ -15,24 +15,25 @@
   padding: 5px 25px;
   color: var(--color-on-primary);
   border-radius: 10px;
-  transition: background-size 0.5s ease;
+  transform: scale(1.1);
+  box-shadow: var(--focus-glow);
 }
 
 #help_popup {
   margin-left: 30px !important;
 }
 
+/* Zoom only on the focused button (was applied to every button, so the
+   zoom told the user nothing) */
 .button_menu button {
   outline: none;
-  background-size: 200% 200%;
-  animation: zoom 0.5s ease forwards;
+  transition: transform var(--focus-duration), background-color var(--focus-duration), box-shadow var(--focus-duration);
   color: var(--color-primary);
   font-size: 35px;
   font-weight: bold;
   margin-top: 8px;
   margin-bottom: 8px;
   border-radius: 10px;
-  transition: background-size 0.5s ease;
   padding: 5px 25px;
   background-color: transparent !important;
   border: 2px solid var(--color-primary);
@@ -74,6 +75,9 @@
 
 .carousel {
   overflow: hidden;
+  /* room for the focused Get Started button's 1.1x zoom, which the
+     overflow above would otherwise clip at the bottom */
+  padding-bottom: 12px;
   width: 50%;
   margin: 0 auto;
   font-size: 32px;
@@ -129,13 +133,15 @@
   text-align: center;
 }
 
-/* Shared popup shell for the Help and Privacy modals */
+/* Shared popup shell for the Help and Privacy modals. The second shadow
+   is the dimmed backdrop over the rest of the screen, same as PopupManager. */
 #help_modal,
 #privacy_modal {
   background: var(--bg-popup);
   border: var(--popup-border);
   border-radius: var(--popup-radius);
-  box-shadow: var(--popup-shadow);
+  box-shadow: var(--popup-shadow), 0 0 0 200vmax var(--bg-overlay);
+  z-index: 1000;
 }
 
 #help_modal .ver-text {

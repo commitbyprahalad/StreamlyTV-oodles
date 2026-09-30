@@ -49,7 +49,7 @@ body {
   text-align: center;
   background-color: transparent;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform var(--focus-duration) ease, border-color var(--focus-duration) ease, box-shadow var(--focus-duration) ease;
   box-shadow: 0 0 0px rgba(0, 123, 255, 0);
   transform: scale(1);
   outline: none;
