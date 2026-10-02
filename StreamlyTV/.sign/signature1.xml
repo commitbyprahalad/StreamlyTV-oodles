@@ -194,13 +194,13 @@ UOFkMrvkjg==</DigestValue>
 </Reference>
 <Reference URI="author-signature.xml">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>eFWBXCykxM6P3Sws1/Pp6EClSK+pATokVX1UAl6Ox2W/SQABko7lVJKmfq2xZmVp0hVRWKjYfzXo
-Tt1lgX1bRw==</DigestValue>
+<DigestValue>FZtYYDLr2nBvLhPffBka+VOQTe0loWLe1qJCFj8vzake7SVPy0SjyH4TWXeP7JvmIBcXmAdFkalw
+djjT/mFExg==</DigestValue>
 </Reference>
 <Reference URI="config.xml">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>a1cMQf+xgOJgXqh4A/jcHX1EoAMr2fay3oDhS4f+IsxR6RtXJ6tidyfXa+17bAzpm12fnFJL3JUv
-qZWJNY5w+A==</DigestValue>
+<DigestValue>husVmCuh2izB0QWknxi7JMHX98ma2qnYbPs/1MSD1HMjn7rwuBmV9g9nlr/7tvor2F+Es8Ec2S0H
+/xOLEz+I3w==</DigestValue>
 </Reference>
 <Reference URI="css%2FLoadingManager.css">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -604,8 +604,8 @@ n/Q1dXCmow==</DigestValue>
 </Reference>
 <Reference URI="settings%2Fsettings.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>eebM2MqiPVQhrVbAyB834m39GmdJ4PuuKWXcBll2SA7RFIDqp4ejgGHJrodtHhKnnldTdlDRHKbb
-bSPeXyNgEw==</DigestValue>
+<DigestValue>F08CKTEAzTW2V40nTs287Pkh+02G1avverAO9wN54ZxD7lKeTJ3ZNcXeFsX1Xs3NuB9Ak/4DReyS
+M49AO3aFPg==</DigestValue>
 </Reference>
 <Reference URI="subscription%2Fsubscription.css">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -707,11 +707,11 @@ GyvKX9Snig==</DigestValue>
 </Reference>
 </SignedInfo>
 <SignatureValue>
-Fk8hEsJ313y5MXkosWdRoJKZ2Lja0oW//5yScRM8yzx69g4Y+RkWuQupxOWxRGMHdM+OqbwzU9JB
-Unnsga1UE7ss+hRnWI6cbp8JDKUxHlhbh76HIwlcVNelwJu7Xox9MrUyCERyjWNNpHaB695irh1U
-9ue6uyjfimKknF9qrhrccK+QO4697OcfFVpZfgHfQdU+J/pEsmnZhoE0NxXcpwWN2wANU9RIiD7I
-hKZsBM+PGISOiAxXI7EMLMplQBcaPDPctv8AWjxSiDbsIfaE5ccXwcumwuzAG1FTsxtK6Bmtx4IF
-Cwaebk5c4YMiSqXVmaGxkhORy+zOr2b7ZuMu2A==
+t4wbAqR3zf1l02xm0zTZw5vyYAPdlJIvIp2kr9rLHeLDCI86p8FCaUtNbbim76nKf64nhV6CJt5H
+hGHmc20bxqjR38jaacas+w8X6+Y5hg/CORboSHHxorxvNrffD4gBE6QGdW2o8kyQJzE5Y92mbOpY
+J/nkgoyuqYpfv1dcxYhfxt7QIPCcIFvHr3OrtBLoAQpiQKGBTSRckBFn9aWq7WmyvaYComSJyauS
++gTjVHNXW/ka0zrj+ViMLScw9mr3AWcnOtdu8LyA7ZdAjIqs1pntDMEhvvD4se7thc2W7LYX8sbw
+dpry7u34SkzhEiF00dw7eewFT3D+IR6EDC2XrQ==
 </SignatureValue>
 <KeyInfo>
 <X509Data>

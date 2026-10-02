@@ -653,7 +653,7 @@ const Settings = (function () {
 
     // The setting-details API doesn't reliably expose is_custom_user, so
     // use what login already stored in localStorage instead.
-    const lsCustomUser = localStorage.getItem("s_custom_user");
+    const lsCustomUser = localStorage.getItem("is_custom_user");
     const lsUserType = localStorage.getItem("user_type");
     const isCustomUser =
       lsCustomUser === "1" ||
@@ -2012,15 +2012,34 @@ const Settings = (function () {
         if (isOtpApiSuccess(data)) {
           openResumeSubOtpOverlay(data && data.message);
         } else {
-          PopupManager.showAlert(
-            (data && data.message) || "Failed to send OTP. Please try again.",
+          handleResumeSubOtpSendError(
+            data,
+            "Failed to send OTP. Please try again.",
           );
-          setTimeout(function () {
-            focusContentArea();
-          }, 100);
         }
       },
     );
+  }
+
+  // ── OTP send/resend failure (mirrors handleDeleteOtpError) ──
+  // The daily OTP limit gets its own message and closes the overlay, since
+  // no further code can be sent. Other failures keep the overlay open on
+  // resend so the user can retry once the timer allows.
+  function handleResumeSubOtpSendError(data, fallbackMsg) {
+    const isLimitReached = isOtpLimitReached(data);
+    const msg = isLimitReached
+      ? (data && data.message) ||
+        "You have reached the maximum number of OTP requests allowed. Please try again after some time."
+      : (data && data.message) || fallbackMsg;
+
+    if (state.isResumeSubOtpOpen && isLimitReached) {
+      closeResumeSubOtpOverlay();
+    } else if (!state.isResumeSubOtpOpen) {
+      setTimeout(function () {
+        focusContentArea();
+      }, 100);
+    }
+    PopupManager.showAlert(msg);
   }
 
   function openResumeSubOtpOverlay(message) {
@@ -2154,8 +2173,9 @@ const Settings = (function () {
           startResumeSubOtpTimer();
           resumeSubOtpPad.focusStart();
         } else {
-          PopupManager.showAlert(
-            (data && data.message) || "Failed to resend OTP. Please try again.",
+          handleResumeSubOtpSendError(
+            data,
+            "Failed to resend OTP. Please try again.",
           );
         }
       },
