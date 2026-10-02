@@ -37,7 +37,7 @@ function getPersonalDeviceId() { return localStorage.getItem("personaldeviceid")
 
 function redirectToLogin(reason) {
     console.warn("Redirecting to login:", reason);
-    localStorage.clear();
+    clearSessionStorage();
     location.href = "../login/login.html";
 }
 
@@ -172,8 +172,8 @@ function doLogout() {
 
     fetch(API.LOGOUT, { method: "POST", headers: myHeaders })
         .then(function (r) { return r.json(); })
-        .then(function () { localStorage.clear(); location.href = "../login/login.html"; })
-        .catch(function () { localStorage.clear(); location.href = "../login/login.html"; });
+        .then(function () { clearSessionStorage(); location.href = "../login/login.html"; })
+        .catch(function () { clearSessionStorage(); location.href = "../login/login.html"; });
 }
 
 // ─── Key Handling ─────────────────────────────────────────────────────────────

@@ -229,6 +229,61 @@ function fetchTermsOfUse() {
 }
 fetchTermsOfUse();
 
+// Privacy & Policy modal text comes from the API as plain text: first line is
+// the title, blank lines separate paragraphs.
+function fetchPrivacyPolicy() {
+    const token = localStorage.getItem("jwt token");
+    const headers = { "Accept": "application/json" };
+    if (token) headers["Authorization"] = "Bearer " + token;
+
+    fetch(API.PRIVACY_POLICY, { method: 'GET', headers: headers })
+        .then(response => response.json())
+        .then(function (result) {
+            const text = result && typeof result.data === "string" ? result.data.trim() : "";
+            if (!text) throw new Error("Empty privacy policy");
+            populatePrivacyPolicy(text);
+        })
+        .catch(function (error) {
+            console.log('error', error);
+            document.getElementById("privacy_content").innerHTML =
+                "<p>Failed to load Privacy &amp; Policy. Please try again later.</p>";
+            refreshOpenPrivacyModal();
+        });
+}
+fetchPrivacyPolicy();
+
+function escapePolicyHtml(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function populatePrivacyPolicy(text) {
+    const lines = text.split(/\r?\n/);
+    const title = lines.shift().trim();
+    if (title) document.getElementById("privacy_title").textContent = title;
+
+    const paragraphs = lines.join("\n").split(/\n\s*\n/);
+    let html = "";
+    for (let i = 0; i < paragraphs.length; i++) {
+        const para = paragraphs[i].trim();
+        if (para) html += "<p>" + escapePolicyHtml(para).replace(/\n/g, "<br>") + "</p>";
+    }
+    document.getElementById("privacy_content").innerHTML = html;
+    refreshOpenPrivacyModal();
+}
+
+// If the modal was opened while "Loading..." was showing, the OK button may
+// already be visible; re-check it against the real content length.
+function refreshOpenPrivacyModal() {
+    if (openModalId !== "privacy_modal") return;
+    setPrivacyOkVisible(false);
+    focusModalBox("privacy_modal");
+    revealPrivacyOkIfAtEnd();
+}
+
 // Fetch Help/Support contact data from API
 function fetchSupportInfo() {
     fetch(API.SUPPORT, {

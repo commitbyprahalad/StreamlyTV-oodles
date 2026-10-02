@@ -62,7 +62,7 @@ if (typeof console === 'undefined') {
 window.showSessionExpirePopup = function () {
     localStorage.setItem('session_expire', 'session_expire');
     PopupManager.session(function () {
-        localStorage.clear();
+        clearSessionStorage();
         window.location.href = '../guide/guide.html';
     }, 'Your session has expired. Please login again.');
 };
@@ -71,7 +71,7 @@ window.showSessionExpirePopup = function () {
 window.showSubscriptionExpirePopup = function (message) {
     const msg = message || 'Your subscription has expired. Please visit https://streamlytv.com to update your plan.';
     PopupManager.showAlert(msg, function () {
-        localStorage.clear();
+        clearSessionStorage();
         window.location.href = '../guide/guide.html';
     });
 };

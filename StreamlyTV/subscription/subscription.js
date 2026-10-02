@@ -502,7 +502,7 @@ const SubscriptionScreen = (function () {
             stopPolling();
             LoadingManager.show();
             request('POST', API.LOGOUT, null, function () {
-                localStorage.clear();
+                clearSessionStorage();
                 window.location.href = '../guide/guide.html';
             });
         });
@@ -667,7 +667,7 @@ const SubscriptionScreen = (function () {
         state.userId = localStorage.getItem('user_id');
 
         if (!state.jwt) {
-            localStorage.clear();
+            clearSessionStorage();
             window.location.href = '../login/login.html';
             return;
         }

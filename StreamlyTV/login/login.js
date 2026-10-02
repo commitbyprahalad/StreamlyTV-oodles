@@ -13,6 +13,9 @@
  *            Refresh QR Code button (stays on the QR screen)
  *          + On-screen keypad opens only on OK; arrow keys move the text
  *            cursor (not remote focus) while the keypad is open (Task 5)
+ *          + Remember Me checkbox beside Forgot Password: saves email +
+ *            password after a successful email login and pre-fills them
+ *            next time (kept across logout via clearSessionStorage)
  */
 
 // ─── State ──────────────────────────────────────────────────────────────────
@@ -45,6 +48,14 @@ const EYE_TOGGLE_MAP = {
 const EYE_TOGGLE_SOURCE_MAP = {
     'eye-toggle': 'password',
     'passcode-eye-toggle': 'passcode-input'
+};
+
+// Remember Me sits on the same row as Forgot Password. Only Remember Me is in
+// the linear UP/DOWN list; Forgot Password is reached with RIGHT from it.
+const FORGOT_LINK_NAV = {
+    left: 'remember-me-btn',
+    up: 'password',
+    down: 'signinbutton'
 };
 
 // ─── Utility ────────────────────────────────────────────────────────────────
@@ -344,11 +355,13 @@ function login() {
             }
 
             if (isDeviceLimitResponse(data)) {
+                applyRememberMe(email, password);
                 handleDeviceLimitResponse(data, { method: 'email', email: email, password: password }, device);
                 return;
             }
 
             if (Number(data.response_code) === 410) {
+                applyRememberMe(email, password);
                 handleSubscriptionExpiredLogin(data, email, device);
                 return;
             }
@@ -359,6 +372,7 @@ function login() {
                 return;
             }
 
+            applyRememberMe(email, password);
             handleLoginResponse(data, email, device.uid, device.version);
         })
         .catch(function (error) {
@@ -975,6 +989,58 @@ function handleLoginResponse(data, email, uid, version) {
 }
 
 // =============================================================================
+// ─── REMEMBER ME ───────────────────────────────────────────────────────────
+// Keys are listed in REMEMBER_ME_KEYS (api-config.js) so logout keeps them.
+// =============================================================================
+
+function isRememberMeChecked() {
+    const btn = document.getElementById('remember-me-btn');
+    return !!btn && btn.classList.contains('checked');
+}
+
+function setRememberMeChecked(checked) {
+    const btn = document.getElementById('remember-me-btn');
+    if (!btn) return;
+    btn.classList.toggle('checked', checked);
+    btn.setAttribute('aria-checked', checked ? 'true' : 'false');
+}
+
+function toggleRememberMe() {
+    const checked = !isRememberMeChecked();
+    setRememberMeChecked(checked);
+    // Unticking forgets any saved credentials straight away
+    if (!checked) clearRememberedLogin();
+}
+
+// Called once the server has accepted the email + password
+function applyRememberMe(email, password) {
+    if (isRememberMeChecked()) {
+        localStorage.setItem('remember_me', '1');
+        localStorage.setItem('remember_me_email', email);
+        localStorage.setItem('remember_me_password', password);
+    } else {
+        clearRememberedLogin();
+    }
+}
+
+function clearRememberedLogin() {
+    localStorage.removeItem('remember_me');
+    localStorage.removeItem('remember_me_email');
+    localStorage.removeItem('remember_me_password');
+}
+
+// Pre-fill the email form from a previous "Remember Me" login
+function loadRememberedLogin() {
+    if (localStorage.getItem('remember_me') !== '1') return;
+    const email = localStorage.getItem('remember_me_email') || '';
+    const password = localStorage.getItem('remember_me_password') || '';
+    if (!email) return;
+    document.getElementById('username').value = email;
+    document.getElementById('password').value = password;
+    setRememberMeChecked(true);
+}
+
+// =============================================================================
 // ─── EYE TOGGLE ────────────────────────────────────────────────────────────
 // =============================================================================
 
@@ -1056,7 +1122,8 @@ function closeKeypad() {
 
 function getLeftSideElements() {
     if (_activeTab === 'email') {
-        return ['username', 'password', 'forgot-password-link', 'signinbutton'];
+        // forgot-password-link is off the linear list (see FORGOT_LINK_NAV)
+        return ['username', 'password', 'remember-me-btn', 'signinbutton'];
     } else if (_activeTab === 'passcode') {
         return ['passcode-input', 'passcode-login-btn'];
     } else if (_activeTab === 'qr') {
@@ -1139,6 +1206,19 @@ function handleKeyDown(e) {
     const leftCount = leftElements.length;
     const isOnEyeToggle = Object.prototype.hasOwnProperty.call(EYE_TOGGLE_SOURCE_MAP, id);
 
+    // Forgot Password (right of Remember Me) has fixed neighbours
+    if (id === 'forgot-password-link' && e.keyCode >= 37 && e.keyCode <= 40) {
+        e.preventDefault();
+        let targetId = null;
+        if (e.keyCode === 37) targetId = FORGOT_LINK_NAV.left;
+        else if (e.keyCode === 38) targetId = FORGOT_LINK_NAV.up;
+        else if (e.keyCode === 40) targetId = FORGOT_LINK_NAV.down;
+        else if (rightElements.length > 0) targetId = rightElements[0];
+        const targetEl = targetId ? document.getElementById(targetId) : null;
+        if (targetEl) targetEl.focus();
+        return;
+    }
+
     switch (e.keyCode) {
         case 37: // LEFT
             e.preventDefault();
@@ -1176,6 +1256,12 @@ function handleKeyDown(e) {
                 // Field (password/passcode) -> its Eye Toggle
                 const eyeEl = document.getElementById(EYE_TOGGLE_MAP[id]);
                 if (eyeEl) eyeEl.focus();
+                break;
+            }
+            if (id === 'remember-me-btn') {
+                // Remember Me -> Forgot Password on the same row
+                const forgotEl = document.getElementById('forgot-password-link');
+                if (forgotEl) forgotEl.focus();
                 break;
             }
             if (isOnEyeToggle) {
@@ -1231,6 +1317,8 @@ function handleKeyDown(e) {
                 }
             } else if (id === 'qr-refresh-btn') {
                 refreshQRCode();
+            } else if (id === 'remember-me-btn') {
+                toggleRememberMe();
             } else if (id === 'forgot-password-link') {
                 showForgotPasswordScreen();
             } else if (id === 'fp-back-btn') {
@@ -1317,6 +1405,13 @@ function init() {
     if (qrRefreshBtn) {
         qrRefreshBtn.addEventListener("click", refreshQRCode);
     }
+
+    // ── Remember Me ──
+    const rememberBtn = document.getElementById("remember-me-btn");
+    if (rememberBtn) {
+        rememberBtn.addEventListener("click", toggleRememberMe);
+    }
+    loadRememberedLogin();
 
     // ── Forgot Password ──
     const forgotLink = document.getElementById("forgot-password-link");

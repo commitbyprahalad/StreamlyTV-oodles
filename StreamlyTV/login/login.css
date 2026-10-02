@@ -93,8 +93,59 @@
 
 /* ── Forgot Password link ── */
 .forgot-password-row {
-  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin: 10px 0 20px 0;
+}
+
+/* ── Remember Me checkbox (sits left of Forgot Password) ── */
+.remember-me-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: #fff;
+  font-size: 22px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+.remember-me-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #fff;
+  font-size: 16px;
+}
+
+.remember-me-box i {
+  visibility: hidden;
+}
+
+.remember-me-btn.checked .remember-me-box {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.remember-me-btn.checked .remember-me-box i {
+  visibility: visible;
+}
+
+.remember-me-btn:focus {
+  color: var(--color-primary);
+  outline: 2px solid var(--color-primary-a50);
+  outline-offset: 4px;
+}
+
+.remember-me-btn:focus .remember-me-box {
+  border-color: var(--color-primary);
 }
 
 .forgot-password-link {
@@ -113,6 +164,14 @@
   color: var(--color-primary);
   outline: 2px solid var(--color-primary-a50);
   outline-offset: 4px;
+}
+
+/* Passcode pane: same 56px gap between field and LOG IN as between the
+   right-side boxes (.login-tab-area gap 16px + .btn-login-alt margin-top 40px).
+   Input already has margin-bottom 20px. Added to the button, not the input, so
+   the eye toggle (top: 62% of the input group) stays centred in the field. */
+#passcode-login-btn {
+  margin-top: 36px;
 }
 
 .login-pass-wrap,

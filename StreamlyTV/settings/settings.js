@@ -7,7 +7,8 @@
  * - Account page (GET /api/auth/setting-details)
  * - FAQ page (GET /api/auth/faq) with accordion
  * - Device page (GET /api/auth/newconnecteddevice) with remove-device flow
- * - Support, Privacy, Terms pages
+ * - Support page
+ * - Privacy page (GET /api/auth/privacypol), Terms page (GET /api/auth/termofuse)
  * - Sign Out via custom overlay
  * - Delete Account via OTP overlay (send OTP -> verify OTP -> delete)
  * - Cancel Subscription via password verification overlay -> confirm -> DELETE
@@ -41,6 +42,8 @@ const Settings = (function () {
     caching: {
       account: null,
       faq: null,
+      privacy: null,
+      terms: null,
       support: null,
       supportMessage: "",
       device: null,
@@ -1266,65 +1269,87 @@ const Settings = (function () {
       version.innerHTML = "Version " + sanitize(data.version || "2.2.4");
   }
 
-  // ─── Privacy Page ───────────────────────────────────────────────────────
+  // ─── Privacy & Terms Pages ──────────────────────────────────────────────
   function renderPrivacyPage() {
-    dom.pageContainer.innerHTML =
-      '<div class="privacy-title">Privacy &amp; Policy</div>' +
-      '<div class="privacy-content">' +
-      '<p>STREAMLY is committed to respecting the privacy of our users. We strive to provide a safe, secure user experience. We have adopted this privacy policy ("Privacy Policy") to explain what information may be collected through our Internet Service, how we use this information, and under what circumstances we may disclose the information to third parties. This Privacy Policy only applies to information we collect through our Service and does not apply to our collection of information from other sources.</p>' +
-      "<p>This Privacy Policy, together with the Authorized Use Policy and Terms &amp; Conditions of Service posted on our website, sets forth the general rules and policies governing your use of our Service. When you use our Service you agree to this Privacy Policy and other listed policies. Information We May Gather About You will be stored and processed in the United States. The information we gather at STREAMLY will not be shared with third parties unless necessary to make improvements to our products and services using consultants and vendors who will be contractually obligated to not further share this information.</p>" +
-      "<p>STREAMLY's web-site may contain links to other web-sites over which we have no control. We are not responsible for the privacy policies or practices of other websites to which you choose to link from our sites. We encourage you to review the privacy policies of those other web-sites so that you can understand the privacy of that web-site.</p>" +
-      "<p>STREAMLY may request that you provide personal information, including your name, address, e-mail address, telephone number, credit card number, social security number, contact information, billing information and any other information from which your identity is discernible.</p>" +
-      "<p>We also gather or may gather certain information about your use of STREAMLY and any related products and services. There is also information about your computer hardware and software that is or may be collected by us. This information can include without limitation your IP address, MAC address(s), browser type, domain names, access times and referring web-site addresses. Our Use of Your Information Except as expressly set forth in the Privacy Policy, STREAMLY DOES NOT disclose your personal information to third parties, or your combined personal and demographic information.</p>" +
-      "<p>STREAMLY uses the information we gather from you or when you visit our website, whether personal, demographic, collective, or technical, for operating and improving our service to you and notifying you of the products and services associated with providing you with telecommunications services that we offer.</p>" +
-      "<p>STREAMLY may use your contact information to send you e-mail or other communications regarding updates that relate to your Internet or telecommunications service or related products or services. STREAMLY discloses information to companies and individuals we retain to perform functions on our behalf, such as consultants or vendors that help maintain our telephone service. For example, third parties that host our web servers that analyze data or that process credit card payments. These third parties will have access to your personal information as necessary to perform their functions that aid STREAMLY's ability to provide telephone service, but they may not share that information with any other third party.</p>" +
-      "<p>STREAMLY discloses information if legally required to do so, if requested to do so by a governmental entity, or if we believe in good faith that such action is necessary to (a) conform to legal requirements or comply with legal process; (b) protect our rights or rights and property of our affiliated companies; (c) prevent a crime or protect national security; or (d) protect the personal safety of users or the public. STREAMLY may disclose and transfer information to a third party who acquires all or a substantial portion of our business, whether such acquisition is by way of merger, consolidation or purchase of all or substantial portion of our assets.</p>" +
-      '<p>Other Uses and Information IP Addresses: An IP address is a number that is automatically assigned to your computer whenever you are surfing the Internet. Web servers (computers that "serve up" web pages) automatically identify your computer by its IP address. When visitors request pages from our Websites, our servers typically log their IP addresses. We collect IP addresses for purposes of system administration, to report non-personal aggregate information to others, and to track the use of our Website. IP addresses are considered non-personal information and may also be shared as provided above. We reserve the right to use IP addresses and any personally identifiable information to identify a visitor when we feel it is necessary to enforce compliance with our Website rules or to: (a) fulfill a government request; (b) conform with the requirements of the law or legal process; (c) protect or defend our legal rights or property, our Website, or other users; or (d) in an emergency to protect the health and safety of our Website\'s users or the general public.</p>' +
-      '<p>Cookies: "Cookies" are small text files from a website that are stored on your hard drive. These text files make using our Website more convenient by, among other things, saving your passwords and preferences for you. Cookies themselves do not typically contain any personally identifiable information. We may analyze the information derived from these cookies and match this information with data provided by you or another party. If you are concerned about the storage and use of cookies, you may be able to direct your internet browser to notify you and seek approval whenever a cookie is being sent to your hard drive. You may also delete a cookie manually from your hard drive through your internet browser or other programs. Please note, however, that some parts of our Website will not function properly or be available to you if you refuse to accept a cookie or choose to disable the acceptance of cookies.</p>' +
-      "<p>Email Communications: If you send us an email with questions or comments, we may use your personally identifiable information to respond to your questions or comments, and we may save your questions or comments for future reference. For security reasons, we do not recommend that you send non-public personal information, such as passwords, social security numbers, or bank account information, to us by email. However, aside from our reply to such an email, it is not our standard practice to send you email unless you request a service or sign up for a feature that involves email communications, it relates to purchases you have made with us (e.g., product updates, customer support, etc.), we are sending you information about our other services, or you consented to being contacted by email for a particular purpose. In certain instances, we may provide you with the option to set your preferences for receiving email communications from us.</p>" +
-      "<p>Security Measures: STREAMLY has put in place measures designed to secure your personal information from accident, loss and from unauthorized access, use, alteration or disclosure. However, while we try to protect your personal information, we cannot guarantee or warrant the security of any information you disclose or transmit to us online. We are not responsible for the theft, destruction, or inadvertent disclosure of your personally identifiable information. Other Sites You may use our Service to link or otherwise access third party websites that we do not control or maintain. There may even be links on our website to third party websites. We are not responsible for the privacy practices and policies employed by any third party. You are encouraged to be aware of when you leave STREAMLY's website. We further encourage you to read the privacy statement of all third-party websites before submitting any personally identifiable information at that website. We may offer chat rooms, blogs, message boards, bulletin boards, or similar public forums where you and other users of our websites can communicate. The protections described in this Privacy Policy do not apply when you provide information (including personal information) in connection with your use of these public forums. We may use personally identifiable information and non-personal information about you to identify you with a posting in a public forum. Any information you share in a public forum is public information and may be seen or collected by anyone, including third parties that do not adhere to our Privacy Policy. We are not responsible for events arising from the distribution of any information you choose to publicly post or share through our Websites.</p>" +
-      "<p>Changes. If STREAMLY decides to materially change our Privacy Policy, we will post those changes through a prominent notice in the company web-site so that you will always know what information is being gathered and how that information might be used. We encourage you to review the Privacy Policy from time to time to be sure you know what the policy provides. You may review, correct, update or change your member information at any time. STREAMLY's representatives can assist you with that process.</p>" +
-      "<p>Contact Us. If at any time, you have questions or concerns about this privacy statement or believe that we have not adhered to this privacy statement, please feel free to contact us via the Contact Us form on the website. STREAMLY's representatives will promptly answer your question and try to resolve your problem.</p>" +
-      "</div>";
-
-    setTimeout(function () {
-      autoFocusContent();
-    }, 100);
+    renderTextPage("privacy", API.PRIVACY_POLICY, "Privacy & Policy");
   }
 
-  // ─── Terms Page ─────────────────────────────────────────────────────────
   function renderTermsPage() {
+    renderTextPage("terms", API.TERMS_OF_USE, "Terms of Use");
+  }
+
+  // Shared loader for plain-text policy pages. `key` is used for the cache
+  // slot, element ids and CSS class prefix (privacy-*, terms-*).
+  function renderTextPage(key, url, fallbackTitle) {
     dom.pageContainer.innerHTML =
-      '<div class="terms-title">Streamly Terms of Use</div>' +
-      '<div class="terms-subtitle">Please read these terms carefully before using our Services</div>' +
-      '<div class="terms-content">' +
-      "<p>Welcome to STREAMLY! Our goal is to provide you with outstanding television content at a great price. These Terms of Use, together with our Privacy Policy and End User License Agreement (EULA), govern your access to and use of our websites, apps, and other Services. By accessing or using any of our Services, you confirm that you have read and agree to these Terms of Use. If you do not agree, please do not access or use our Services.</p>" +
-      "<p><strong>These Terms of Use require mandatory, binding arbitration on an individual basis to resolve disputes, rather than jury trials or class actions, subject to certain exceptions described below.</strong></p>" +
-      "<h3>1. Acceptance of Terms of Use</h3>" +
-      "<p>Our Services are not intended for children without the involvement of a parent or legal guardian. Users under 13 may not register. Users between 13 and 18 may register only with parental or guardian consent. These Terms of Use govern your relationship with us and may change from time to time; continued use of the Services after changes take effect constitutes your acceptance of the revised terms. Certain content is copyrighted by third parties and is provided for private, personal, non-commercial use only.</p>" +
-      "<h3>2. Our Services</h3>" +
-      "<p>Your subscription provides access to our software, websites, and content, including video, audio, and interactive programming. You are responsible for obtaining and maintaining your own internet connection and compatible device, and STREAMLY makes no guarantees about connection speed, quality, or device compatibility. We may add, change, or remove content, packaging, features, or functionality at any time without providing credits or refunds. Certain programming may be blacked out in your area or restricted by age. Our Cloud DVR service, where available, is provided without any guarantee of available recording time, continued access to recordings, or error-free operation, and STREAMLY is released from liability related to its use. You agree to use the Services only in compliance with applicable law and not to circumvent, reverse-engineer, or interfere with the Services in any way. Each account may select only one service offering.</p>" +
-      "<h3>3. Membership Accounts</h3>" +
-      "<p>To become an Authorized User, you must register for a Membership Account and create login credentials. You are responsible for all activity under your account and for keeping your login credentials confidential. If you believe your account has been accessed without authorization, contact us immediately at 1 (888)-309-0838. We may place your account on hold if we suspect fraudulent or unauthorized activity, without obligation to provide compensation. If your device is lost, stolen, or transferred, notify Customer Service right away to prevent unauthorized access.</p>" +
-      "<h3>4. Transactional and Subscription Services</h3>" +
-      "<p>Some Services are available without payment (Transactional Services), while others require a paid subscription for a set term (Subscription Services). Subscriptions automatically renew month-to-month at then-current rates unless cancelled. We may offer promotional packages subject to additional terms, and promotional pricing is not guaranteed to continue. Only one promotional offer may apply per Account Owner unless otherwise stated. You may cancel your Subscription Services at any time by visiting our website or calling Customer Service; cancellations are not accepted by email. Because Services are prepaid, cancellation takes effect at the end of the current billing period, and no refunds are issued for partial or unused periods.</p>" +
-      "<h3>5. Billing</h3>" +
-      "<p>Subscription Services are billed monthly in advance to your registered credit or debit card. We may change fees, add surcharges, or apply interest and late fees for overdue amounts. All payments are non-refundable except as we may elect, at our sole discretion, on a case-by-case basis. If your account is disconnected for non-payment, you may be required to pay all outstanding amounts before Services are restored, and you may lose eligibility for prior promotional pricing. Billing disputes must be reported within 15 days of the applicable bill. Residents of Puerto Rico are billed by streamlytv.com on behalf of DISH Network Puerto Rico L.L.C.</p>" +
-      "<h3>6. Customer Support Services and Communications</h3>" +
-      "<p>STREAMLY may, at its discretion, provide customer support in connection with your account. By registering, you consent to receive electronic communications from us, including account notices, service updates, and promotional messages. You may opt out of non-transactional communications at any time via the unsubscribe link or by contacting Customer Service.</p>" +
-      "<h3>7. Intellectual Property</h3>" +
-      '<p>All STREAMLY Services and content are protected by copyright, trademark, and other intellectual property laws. "STREAMLY," "STREAMLY Television," and "STREAMLYTV" are registered trademarks. Your use of our apps and software is also governed by our End User License Agreement (EULA). If you believe your copyrighted work has been infringed, please submit a written notice with the required details to our Notice Address or through our DMCA policy. Unauthorized reception or redistribution of our Services is a violation of federal and state law and may result in significant civil and criminal penalties, including account termination.</p>' +
-      "<h3>8. Disclaimer of Warranties</h3>" +
-      '<p>Our Services are provided on an "as is" and "as available" basis. Except as expressly stated in these Terms of Use, STREAMLY disclaims all warranties, express or implied, including warranties of merchantability, fitness for a particular purpose, and non-infringement. We do not guarantee uninterrupted, error-free, or secure service, nor do we warrant the performance of any device or internet connection used with our Services. Use of the Services, and any content obtained through them, is at your own risk.</p>' +
-      "<h3>9. Limitation of Liability</h3>" +
-      "<p>STREAMLY and its affiliates are not liable for indirect, incidental, special, consequential, or punitive damages arising from your use of the Services, even if advised of the possibility of such damages. We are not responsible for failures caused by events beyond our reasonable control (force majeure), including natural disasters, power or technical failures, or governmental action. Except where otherwise stated, our maximum aggregate liability is limited to the fees you paid during the six months preceding a claim. Some jurisdictions do not allow these limitations, in which case they may not fully apply to you.</p>" +
-      "<h3>10. Indemnification</h3>" +
-      "<p>You agree to indemnify and hold harmless STREAMLY, its affiliates, partners, and related parties from any claims, damages, or expenses, including reasonable attorneys' fees, arising from your use of the Services, your Membership Account, or your violation of these Terms of Use or the rights of another user.</p>" +
-      "<h3>11. Dispute Resolution, Arbitration Agreement and Class Action Waiver</h3>" +
-      "<p>Except for disputes relating to intellectual property enforcement, you and STREAMLY agree that disputes will be resolved exclusively through individual binding arbitration or small claims court, not through class actions or jury trials. Before initiating arbitration, both parties agree to attempt informal resolution for at least 60 days after a written Dispute Notice is sent. Arbitration will be administered by the American Arbitration Association (AAA) under its Consumer Arbitration Rules. For claims under $75,000, STREAMLY will generally cover arbitration costs and fees. Neither party may bring claims as part of a class, consolidated, or representative proceeding. You may opt out of this arbitration agreement by sending written notice within 30 days of first accepting these Terms of Use. This section does not prevent you from filing complaints with government agencies such as the FCC.</p>" +
-      "<h3>12. Miscellaneous</h3>" +
-      "<p>Notices may be provided by mail, email, telephone, or through your Membership Account. These Terms of Use, together with the Privacy Policy and EULA, constitute the entire agreement between you and STREAMLY and are governed by the laws of the State of Nevada. Any claims not subject to arbitration must be filed in the state or federal courts of Denver, Colorado. STREAMLY may assign these Terms of Use to a third party without your consent; you may not assign your agreement without our prior written consent. Any claim must be filed within one year of when it arose, or it is permanently waived. Provisions that would reasonably be expected to survive termination of your account, including indemnification, dispute resolution, and limitation of liability, will continue to apply after termination.</p>" +
-      "</div>";
+      '<div class="' + key + '-title" id="' + key + '-title"></div>' +
+      '<div class="' + key + '-content" id="' + key + '-content"><div class="sub-value">Loading...</div></div>';
+    document.getElementById(key + "-title").textContent = fallbackTitle;
+
+    if (state.caching[key]) {
+      populateTextPage(key, state.caching[key]);
+      return;
+    }
+
+    showLoading();
+    state.isPageLoading = true;
+
+    apiRequest("GET", url, null, function (data) {
+      // Response: { success: true, response_code: 200, data: "plain text with \n" }
+      const text =
+        data && typeof data.data === "string" ? data.data.trim() : "";
+      if (text) {
+        state.caching[key] = text;
+        populateTextPage(key, text);
+      } else {
+        const content = document.getElementById(key + "-content");
+        if (content)
+          content.innerHTML =
+            '<div class="sub-value">Failed to load ' +
+            escapeTextHtml(fallbackTitle) +
+            "</div>";
+        setTimeout(function () {
+          autoFocusContent();
+        }, 100);
+      }
+    });
+  }
+
+  function escapeTextHtml(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function populateTextPage(key, text) {
+    const titleEl = document.getElementById(key + "-title");
+    const content = document.getElementById(key + "-content");
+    if (!content) return;
+
+    // First line of the API text is the document title (e.g. "Streamly Terms of Use")
+    const lines = text.split(/\r?\n/);
+    const title = lines.shift().trim();
+    if (titleEl && title) titleEl.textContent = title;
+
+    // Blank lines separate paragraphs; single newlines become line breaks
+    const paragraphs = lines
+      .join("\n")
+      .split(/\n\s*\n/)
+      .map(function (para) {
+        return para.trim();
+      })
+      .filter(function (para) {
+        return para.length > 0;
+      });
+
+    let html = "";
+    for (let i = 0; i < paragraphs.length; i++) {
+      html +=
+        "<p>" + escapeTextHtml(paragraphs[i]).replace(/\n/g, "<br>") + "</p>";
+    }
+    content.innerHTML = html;
 
     setTimeout(function () {
       autoFocusContent();
@@ -1387,13 +1412,13 @@ const Settings = (function () {
     xhr.onreadystatechange = function () {
       if (xhr.readyState === 4) {
         hideLoading();
-        localStorage.clear();
+        clearSessionStorage();
         window.location.href = "../guide/guide.html";
       }
     };
     xhr.onerror = function () {
       hideLoading();
-      localStorage.clear();
+      clearSessionStorage();
       window.location.href = "../guide/guide.html";
     };
     // Remote keys are blocked while the loader is up, so never wait forever
@@ -1403,7 +1428,7 @@ const Settings = (function () {
       xhr.send();
     } catch (e) {
       hideLoading();
-      localStorage.clear();
+      clearSessionStorage();
       window.location.href = "../guide/guide.html";
     }
   }
@@ -1961,7 +1986,7 @@ const Settings = (function () {
       function (data) {
         if (isOtpApiSuccess(data)) {
           closeDeleteOtpOverlay();
-          localStorage.clear();
+          clearSessionStorage();
           window.location.href = "../login/login.html";
         } else {
           if (dom.deleteOtpError) {

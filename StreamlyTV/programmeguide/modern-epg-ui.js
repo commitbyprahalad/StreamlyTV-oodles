@@ -781,7 +781,7 @@ if (document.addEventListener) {
         const sessionOk = document.getElementById('session-ok');
         if (sessionOk) {
             sessionOk.addEventListener('click', function () {
-                localStorage.clear();
+                clearSessionStorage();
                 window.location.href = '../login/login.html';
             });
         }

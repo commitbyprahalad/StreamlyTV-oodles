@@ -13,7 +13,7 @@ const AuthSession = (function () {
     function handleSessionExpired() {
         localStorage.setItem('session_expire', 'session_expire');
         PopupManager.session(function () {
-            localStorage.clear();
+            clearSessionStorage();
             window.location.href = '../guide/guide.html';
         });
     }
@@ -22,7 +22,7 @@ const AuthSession = (function () {
     function handleSubscriptionExpired(message) {
         const msg = message || 'Your subscription has expired. Please visit https://streamlytv.com to update your plan.';
         PopupManager.showAlert(msg, function () {
-            localStorage.clear();
+            clearSessionStorage();
             window.location.href = '../guide/guide.html';
         });
     }

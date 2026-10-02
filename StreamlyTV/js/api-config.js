@@ -42,6 +42,7 @@ const API = {
   FAQ: API_BASE_URL + "/auth/faq",
   SUPPORT: API_BASE_URL + "/auth/support",
   TERMS_OF_USE: API_BASE_URL + "/auth/termofuse",
+  PRIVACY_POLICY: API_BASE_URL + "/auth/privacypol",
   VERIFY_PASSWORD: API_BASE_URL + "/auth/verify-password",
 
   // Account
@@ -58,3 +59,21 @@ const API = {
   CUSTOM_SUBSCRIPTION_PLANS: API_BASE_URL + "/auth/custom/subscription/plan",
   SUBSCRIPTION_PLAN_REQUEST: API_BASE_URL + "/auth/subscription/plan-request",
 };
+
+// ─── Session storage helpers ────────────────────────────────────────────────
+// "Remember Me" on the login screen must survive logout / session expiry, so
+// these keys are kept when the rest of localStorage is wiped.
+const REMEMBER_ME_KEYS = ["remember_me", "remember_me_email", "remember_me_password"];
+
+// Use instead of localStorage.clear() when logging the user out.
+function clearSessionStorage() {
+  const kept = {};
+  for (let i = 0; i < REMEMBER_ME_KEYS.length; i++) {
+    const value = localStorage.getItem(REMEMBER_ME_KEYS[i]);
+    if (value !== null) kept[REMEMBER_ME_KEYS[i]] = value;
+  }
+  localStorage.clear();
+  for (const key in kept) {
+    localStorage.setItem(key, kept[key]);
+  }
+}
