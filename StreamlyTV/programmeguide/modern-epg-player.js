@@ -308,6 +308,7 @@ EPG.player = {
             if (stale() || fellBack) return;
             fellBack = true; // late AVPlay events after stop() must not start dash.js twice
             console.warn('[PLAYER] AVPlay could not start (' + reason + ') — falling back to dash.js');
+            self.reportError('AVPlayStartFailed', 'AVPlay could not start (' + reason + '), falling back to dash.js');
             try { sessionStorage.setItem(self.AVPLAY_UNAVAILABLE_KEY, '1'); } catch (e) { /* not persisted */ }
             clearTimeout(self.bufferingTimeout);
             self.stopAVPlay();
@@ -322,6 +323,7 @@ EPG.player = {
             if (stale()) return;
             if (started) {
                 console.error('[PLAYER] AVPlay error while playing:', reason);
+                self.reportError('AVPlayPlaybackError', 'AVPlay error while playing: ' + reason);
                 self.showError();
             } else {
                 fallBackToDash(reason);
@@ -337,7 +339,9 @@ EPG.player = {
                     self.showSpinner();
                     clearTimeout(self.bufferingTimeout);
                     self.bufferingTimeout = setTimeout(function () {
-                        if (!stale()) self.showError();
+                        if (stale()) return;
+                        self.reportError('BufferingTimeout', 'Stalled buffering for 30s while playing');
+                        self.showError();
                     }, 30000);
                 },
                 onbufferingcomplete: function () {
@@ -469,6 +473,7 @@ EPG.player = {
 
         if (!this.videoElement) {
             console.error('[PLAYER] FAIL: videoElement not found');
+            this.reportError('DashLoadError', 'videoElement not found');
             //this.showError();
             return;
         }
@@ -490,6 +495,7 @@ EPG.player = {
             }
             this._dashWaitCount = 0;
             console.error('[PLAYER] FAIL: dash.js not loaded');
+            this.reportError('DashLoadError', 'dash.js library not loaded after 5s');
             //this.showError();
             return;
         }
@@ -502,6 +508,7 @@ EPG.player = {
             console.log('[PLAYER]   dash.js player created');
         } catch (e) {
             console.error('[PLAYER] FAIL: create dash.js player:', e);
+            this.reportError('DashLoadError', 'Could not create dash.js player', e);
             //this.showError();
             return;
         }
@@ -527,6 +534,7 @@ EPG.player = {
                 console.log('[PLAYER]   DRM protection configured');
             } catch (e) {
                 console.error('[PLAYER]   DRM setup failed:', e);
+                this.reportError('DRMSetupError', 'dash.js setProtectionData failed', e);
             }
         } else {
             console.log('[PLAYER]   No DRM data - no protection');
@@ -536,6 +544,7 @@ EPG.player = {
         const self = this;
         this.bufferingTimeout = setTimeout(function () {
             console.log('[PLAYER]   Buffering timeout (30s) - showing error');
+            self.reportError('BufferingTimeout', 'dash.js stream did not start within 30s');
             self.showError();
         }, 30000);
 
@@ -559,6 +568,7 @@ EPG.player = {
             }, 500);
         } catch (e) {
             console.error('[PLAYER] FAIL: dashPlayer.initialize() threw:', e);
+            this.reportError('DashLoadError', 'dashPlayer.initialize() threw', e);
             clearTimeout(this.bufferingTimeout);
             this.showError();
         }
@@ -592,6 +602,7 @@ EPG.player = {
                     clearTimeout(self.bufferingTimeout);
                     self.bufferingTimeout = setTimeout(function () {
                         //console.error('Buffer empty timeout');
+                        self.reportError('BufferingTimeout', 'dash.js buffer empty for 30s');
                         self.showError();
                     }, 30000);
                 });
@@ -633,6 +644,7 @@ EPG.player = {
                 this.dashPlayer.on(events.PLAYBACK_ERROR, function (e) {
                     if (!self.isActive) return;
                     console.error('[PLAYER] EVENT: PLAYBACK_ERROR', e);
+                    self.reportError('DashPlaybackError', 'PLAYBACK_ERROR ' + JSON.stringify((e && e.error) || e || {}));
                     self.showError();
                 });
             }
@@ -645,6 +657,7 @@ EPG.player = {
             if (events.KEY_ERROR) {
                 this.dashPlayer.on(events.KEY_ERROR, function (e) {
                     console.error('[PLAYER] EVENT: KEY_ERROR', e);
+                    self.reportError('DRMKeyError', 'KEY_ERROR ' + JSON.stringify((e && e.error) || e || {}));
                 });
             }
         } catch (e) {
@@ -853,6 +866,19 @@ EPG.player = {
 
     hideSpinner: function () {
         if (this.spinner) this.spinner.className = 'player-spinner hidden';
+    },
+
+    // Queue a player failure for the crash report API (CrashLogger).
+    // api_url is the stream path only — the query string can hold tokens.
+    reportError: function (exception, message, err) {
+        CrashLogger.log({
+            exception: exception,
+            message: '[' + (this.engine || 'no engine') + '] ' + message +
+                (err ? ' – ' + (err.message || err.name || String(err)) : ''),
+            stack_trace: err && err.stack,
+            screen: 'Player Screen',
+            api_url: localStorage.getItem('channelUrl')
+        });
     },
 
     showError: function () {

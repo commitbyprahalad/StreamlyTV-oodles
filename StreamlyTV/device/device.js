@@ -121,13 +121,17 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // ─── Re-login to refresh device list ────────────────────────────────────
+    // ─── Re-login after a device was removed ────────────────────────────────
+    // Logs in again with the method the user originally used and then
+    // finishes the login exactly like the login screen does: the full session
+    // is saved (personaldeviceid, role, custom/HOA flags, token, ...) before
+    // routing on. Saving only the token here left personaldeviceid empty, so
+    // the device-name screen stopped with "Device ID missing".
     function relogin() {
-        const uid = localStorage.getItem('deviceid') || '';
+        const device = buildDevicePayload();
         const formData = new FormData();
         let url = API.LOGIN;
 
-        // Re-login with the same method the user originally logged in with.
         if (localStorage.getItem('loginMethod') === 'passcode') {
             url = API.LOGIN_WITH_PASSCODE;
             formData.append('passcode', localStorage.getItem('passcode') || '');
@@ -135,7 +139,8 @@ document.addEventListener('DOMContentLoaded', function () {
             formData.append('email', localStorage.getItem('email') || '');
             formData.append('password', localStorage.getItem('password') || '');
         }
-        formData.append('deviceid', uid);
+        // Same device info as every other login (not just the device id)
+        appendDeviceFields(formData, device);
 
         fetch(url, {
             method: 'POST',
@@ -143,31 +148,97 @@ document.addEventListener('DOMContentLoaded', function () {
             mode: 'cors',
             headers: { 'Accept': 'application/json' }
         })
-            .then(function (response) { return response.json(); })
-            .then(function (data) {
-                LoadingManager.hide();
-                if (AuthSession.checkApiResponse(data)) return;
-                if (data.response_code === 479 && data.loggedindeviceinfolist && data.loggedindeviceinfolist.data) {
-                    localStorage.setItem('deviceList', JSON.stringify(data.loggedindeviceinfolist.data));
-                    localStorage.setItem('jwt token', data.access_token);
-                    window.location.reload();
-                } else if (data.success) {
-                    localStorage.setItem('jwt token', data.access_token);
-                    if (data.personaldevicename_popup) {
-                        window.location.href = '../personaldevice/personaldevice.html';
-                    } else if (data.userrole === 'tieruser' && data.user && data.user.is_custom_user === 0) {
-                        window.location.href = '../hotelroom/hotelroom.html';
-                    } else {
-                        window.location.href = '../programmeguide/epg.html';
+            .then(function (response) {
+                // 479 / 410 can arrive with an empty body: fall back to the
+                // HTTP status so those cases are still recognised.
+                return response.text().then(function (text) {
+                    let data = null;
+                    try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+                    if (!data && (response.status === 479 || response.status === 410)) {
+                        data = { response_code: response.status, success: false };
                     }
-                } else {
-                    window.location.href = '../login/login.html';
+                    if (data && !data.response_code && (response.status === 479 || response.status === 410)) {
+                        data.response_code = response.status;
+                    }
+                    return data;
+                });
+            })
+            .then(function (data) {
+                if (!data) {
+                    LoadingManager.hide();
+                    PopupManager.showAlert('Something went wrong. Please login again.', goToLogin);
+                    return;
                 }
+                const code = Number(data.response_code);
+                const email = (data.user && data.user.email) || localStorage.getItem('email') || '';
+
+                // Still over the limit: refresh the list and stay here
+                if (code === 479) {
+                    LoadingManager.hide();
+                    if (data.loggedindeviceinfolist && data.loggedindeviceinfolist.data) {
+                        localStorage.setItem('deviceList', JSON.stringify(data.loggedindeviceinfolist.data));
+                    }
+                    window.location.reload();
+                    return;
+                }
+
+                // Subscription expired: same as login — subscription screen
+                // when the response carries a session, else the expired popup
+                if (code === 410) {
+                    LoadingManager.hide();
+                    if (!data.access_token || !data.user) {
+                        AuthSession.handleSubscriptionExpired(data.subscribedmsgis || data.message);
+                        return;
+                    }
+                    saveLoginSession(data, email, device.uid, device.version);
+                    if (data.qrcode) localStorage.setItem('subscription_qrcode', data.qrcode);
+                    clearReloginCredentials();
+                    flushThen(AuthSession.goToSubscriptionScreen);
+                    return;
+                }
+
+                if (AuthSession.checkApiResponse(data)) {
+                    LoadingManager.hide();
+                    return;
+                }
+
+                if (data.success && data.access_token) {
+                    saveLoginSession(data, email, device.uid, device.version);
+                    clearReloginCredentials();
+                    // Device name -> hotel room (tier users) -> EPG, same as login
+                    flushThen(function () {
+                        LoadingManager.hide();
+                        AuthSession.continueAfterLogin();
+                    });
+                    return;
+                }
+
+                LoadingManager.hide();
+                PopupManager.showAlert(data.message || 'Login failed. Please login again.', goToLogin);
             })
             .catch(function () {
                 LoadingManager.hide();
                 PopupManager.showAlert('Network error. Please try again.');
             });
+    }
+
+    // Upload queued crash reports before leaving (same as the login screen)
+    function flushThen(next) {
+        if (typeof CrashLogger !== 'undefined') CrashLogger.flush(next);
+        else next();
+    }
+
+    // The password / passcode were only kept for this re-login
+    function clearReloginCredentials() {
+        localStorage.removeItem('password');
+        localStorage.removeItem('passcode');
+        localStorage.removeItem('loginMethod');
+        localStorage.removeItem('deviceList');
+        localStorage.removeItem('devices');
+    }
+
+    function goToLogin() {
+        window.location.href = '../login/login.html';
     }
 
     // ─── Key Navigation ─────────────────────────────────────────────────────

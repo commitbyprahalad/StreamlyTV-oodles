@@ -74,6 +74,16 @@ EPG.ui = {
 
     // ── Day indicator ─────────────────────────────────────────────────────
 
+    // "Thu, Oct 8" / "Thursday, Oct 8" built by hand: toLocaleDateString
+    // with options is very slow on Tizen and ran on every scroll.
+    _DAYS: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    _MONTHS: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+
+    formatDate: function (date, longDay) {
+        const day = this._DAYS[date.getDay()];
+        return (longDay ? day : day.substring(0, 3)) + ', ' + this._MONTHS[date.getMonth()] + ' ' + date.getDate();
+    },
+
     updateDayIndicator: function () {
         const dayIndicator = document.getElementById('day-indicator');
         const programGrid = document.getElementById('program-grid');
@@ -87,12 +97,14 @@ EPG.ui = {
         const tomorrowMidnight = new Date(todayMidnight.getTime() + 86400000);
 
         const dayText = currentTime >= tomorrowMidnight.getTime() / 1000 ? 'Tomorrow' : 'Today';
-        const dateObj = new Date(currentTime * 1000);
-        const dateText = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        const dateText = this.formatDate(new Date(currentTime * 1000), false);
 
-        dayIndicator.innerHTML =
-            '<div class="day-text"><strong>' + dayText + '</strong></div>' +
+        // Only touch the DOM when the label actually changes
+        const html = '<div class="day-text"><strong>' + dayText + '</strong></div>' +
             '<div class="date-text">' + dateText + '</div>';
+        if (dayIndicator._lastHtml === html) return;
+        dayIndicator._lastHtml = html;
+        dayIndicator.innerHTML = html;
     },
 
     // ── Channel sidebar ───────────────────────────────────────────────────
@@ -140,6 +152,15 @@ EPG.ui = {
         grid.innerHTML = this.buildProgramRowsHtml(channels, 0, EPG.state.firstSlotTime);
         this._liveRowCacheKey = null;
         this.updateElapsedShading();
+        this.reapplyRowWindow();
+    },
+
+    // Keep off-screen rows unpainted after a re-render / append (see
+    // EPG.focus.applyRowWindow)
+    reapplyRowWindow: function () {
+        if (typeof EPG.focus !== 'undefined' && typeof EPG.focus.reapplyRowWindow === 'function') {
+            EPG.focus.reapplyRowWindow();
+        }
     },
 
     buildProgramRowsHtml: function (channels, startIndex, firstSlotTime) {
@@ -285,6 +306,7 @@ EPG.ui = {
         this._liveRowCacheKey = null;
         this.updateElapsedShading();
         this.syncLiveIndicatorVisibility();
+        this.reapplyRowWindow();
 
         // Player channel strip: add the new channels too
         if (typeof EPG.player !== 'undefined' && typeof EPG.player.preBuildChannelList === 'function') {
@@ -476,7 +498,9 @@ EPG.ui = {
 
         // top  = time-header height + rows above the first live row
         // height = number of consecutive live rows × ROW_HEIGHT
-        const timeHeaderHeight = timeHeader ? timeHeader.offsetHeight : 50;
+        // Read once: offsetHeight forces a layout of the whole grid
+        if (!this._timeHeaderHeight && timeHeader) this._timeHeaderHeight = timeHeader.offsetHeight;
+        const timeHeaderHeight = this._timeHeaderHeight || 50;
         const topPx = timeHeaderHeight + (firstLiveRow * ROW_HEIGHT);
         const heightPx = (lastLiveRow - firstLiveRow + 1) * ROW_HEIGHT;
 
@@ -533,10 +557,19 @@ EPG.ui = {
                 const nextFrame = window.requestAnimationFrame
                     ? function (fn) { window.requestAnimationFrame(fn); }
                     : function (fn) { setTimeout(fn, 16); };
+                // UP/DOWN only scroll vertically, which can't change the day
+                // or move the live line (it sits outside the scrolled grid) —
+                // so vertical scrolls do no work here at all. Previously every
+                // vertical scroll (i.e. every UP/DOWN past channel 6) rebuilt
+                // the day label and forced a layout, which lagged the remote.
                 let scrollQueued = false;
+                let lastScrollLeft = programGrid.scrollLeft;
                 programGrid.onscroll = null;
                 programGrid.addEventListener('scroll', function () {
-                    timeHeader.scrollLeft = programGrid.scrollLeft;
+                    const left = programGrid.scrollLeft;
+                    if (left === lastScrollLeft) return;
+                    lastScrollLeft = left;
+                    timeHeader.scrollLeft = left;
                     if (scrollQueued) return;
                     scrollQueued = true;
                     nextFrame(function () {
@@ -642,7 +675,7 @@ EPG.ui = {
 
             if (grouped.Today.length > 0) {
                 const today = new Date();
-                const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+                const dateStr = this.formatDate(today, true);
                 modalHTML += '<div class="schedule-day-section">';
                 modalHTML += '<h4>Today</h4>';
                 modalHTML += '<div class="day-date">' + dateStr + '</div>';
@@ -660,7 +693,7 @@ EPG.ui = {
             if (grouped.Tomorrow.length > 0) {
                 const tomorrow = new Date();
                 tomorrow.setDate(tomorrow.getDate() + 1);
-                const dateStr = tomorrow.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+                const dateStr = this.formatDate(tomorrow, true);
                 modalHTML += '<div class="schedule-day-section">';
                 modalHTML += '<h4>Tomorrow</h4>';
                 modalHTML += '<div class="day-date">' + dateStr + '</div>';

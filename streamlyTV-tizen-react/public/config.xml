@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns:tizen="http://tizen.org/ns/widgets" xmlns="http://www.w3.org/ns/widgets" id="https://streamlytv.com/StreamlyReact" version="3.0.0" viewmodes="maximized">
+    <access origin="*" subdomains="true"></access>
+    <!-- Test package: installs next to the current StreamlyTV app
+         (Z3APSRzuXq.StreamlyTV). Switch to that id to ship it as the update. -->
+    <tizen:application id="StrReact01.StreamlyReact" package="StrReact01" required_version="3.0"/>
+    <author href="https://streamlytv.com">Streamly</author>
+    <content src="index.html"/>
+    <description>Streamly</description>
+    <feature name="http://tizen.org/feature/screen.size.normal.1080.1920"/>
+    <icon src="icon.png"/>
+    <name>StreamlyTV React</name>
+    <tizen:metadata key="http://samsung.com/tv/metadata/use.voiceguide" value="false"/>
+    <tizen:metadata key="http://samsung.com/tv/metadata/prelaunch.support" value="true"/>
+    <tizen:privilege name="http://developer.samsung.com/privilege/drmplay"/>
+    <tizen:privilege name="http://developer.samsung.com/privilege/network.public"/>
+    <tizen:privilege name="http://developer.samsung.com/privilege/productinfo"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://developer.samsung.com/privilege/tv.info"/>
+    <tizen:privilege name="http://tizen.org/privilege/systeminfo"/>
+    <tizen:profile name="tv-samsung"/>
+    <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="disable" encryption="disable" install-location="auto" hwkey-event="enable"/>
+</widget>

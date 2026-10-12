@@ -68,19 +68,17 @@ window.showSessionExpirePopup = function () {
 };
 
 // ===== SUBSCRIPTION EXPIRE POPUP HANDLER =====
-window.showSubscriptionExpirePopup = function (message) {
-    const msg = message || 'Your subscription has expired. Please visit https://streamlytv.com to update your plan.';
-    PopupManager.showAlert(msg, function () {
-        clearSessionStorage();
-        window.location.href = '../guide/guide.html';
-    });
+window.showSubscriptionExpirePopup = function (message, data) {
+    // Same handling as everywhere else: subscription module (Auto-Renewal
+    // Failed / Expired screen) instead of the backend message popup.
+    AuthSession.handleSubscriptionExpired(message, data);
 };
 
 // ===== GLOBAL CONFIGURATION =====
 const EPG = window.EPG || {};
 
 EPG.config = {
-    API_URL: API.EPG_GUIDE_V2,
+    API_URL: API.EPG_GUIDE_V2_TEST,
     PAGE_LIMIT: 20, // channels per EPG page
     PAGE_RETRY_MAX: 3, // quiet retries for a failed background page
     PROGRAM_DETAILS_URL: API.PROGRAM_DETAILS,
@@ -250,9 +248,16 @@ EPG.network = {
         xhr.timeout = timeoutMs;
 
         let done = false;
-        function fail(kind) {
+        function fail(kind, detail) {
             if (done) return;
             done = true;
+            CrashLogger.log({
+                exception: 'EPGLoadError',
+                message: 'EPG page ' + page + ' failed: ' + kind +
+                    ' (HTTP ' + xhr.status + ')' + (detail ? ' – ' + detail : ''),
+                screen: 'EPG Screen',
+                api_url: EPG.config.API_URL
+            });
             onError(kind);
         }
 
@@ -280,7 +285,7 @@ EPG.network = {
                 data = JSON.parse(xhr.responseText);
             } catch (e) {
                 console.error('EPG JSON parse error:', e);
-                fail('parse');
+                fail('parse', e && e.message);
                 return;
             }
 
@@ -291,14 +296,14 @@ EPG.network = {
                 onError('auth');
                 return;
             }
-            if (data.response_code === 410) {
+            if (Number(data.response_code) === 410) {
                 done = true;
-                showSubscriptionExpirePopup(data.subscribedmsgis || data.message);
+                showSubscriptionExpirePopup(data.subscribedmsgis || data.message, data);
                 onError('auth');
                 return;
             }
             if (!data.success || data.response_code !== 200 || !data.data) {
-                fail('http');
+                fail('http', 'response_code ' + data.response_code + ': ' + (data.message || 'no data'));
                 return;
             }
 
@@ -315,7 +320,10 @@ EPG.network = {
 
             let hasMore = data.has_more;
             if (hasMore === undefined && !Array.isArray(payload)) hasMore = payload.has_more;
-            hasMore = hasMore === true || hasMore === 'true' || hasMore === 1 || hasMore === '1';
+            hasMore = hasMore === undefined
+                // No has_more flag: a full page means there may be more.
+                ? list.length >= EPG.config.PAGE_LIMIT
+                : hasMore === true || hasMore === 'true' || hasMore === 1 || hasMore === '1';
             // An empty page can never have more after it; avoids an endless loop.
             if (!list.length) hasMore = false;
 
@@ -330,7 +338,8 @@ EPG.network = {
             xhr.send(JSON.stringify({
                 typeurl: EPG.state.bodyData.typeurl,
                 genre: EPG.state.bodyData.genre,
-                page: page,
+                // Offset-based API: page 1 -> start 0, page 2 -> start PAGE_LIMIT, ...
+                start: (page - 1) * EPG.config.PAGE_LIMIT,
                 limit: EPG.config.PAGE_LIMIT,
                 zipcode: EPG.state.bodyData.zipcode
             }));
@@ -454,8 +463,8 @@ EPG.network = {
                             showSessionExpirePopup();
                             return;
                         }
-                        if (data.response_code === 410) {
-                            showSubscriptionExpirePopup(data.subscribedmsgis || data.message);
+                        if (Number(data.response_code) === 410) {
+                            showSubscriptionExpirePopup(data.subscribedmsgis || data.message, data);
                             return;
                         }
 
@@ -489,6 +498,15 @@ EPG.network = {
     fetchDRMKeys: function (callback) {
         // console.log('Fetching DRM keys...');
 
+        function reportFailure(message) {
+            CrashLogger.log({
+                exception: 'DRMKeyFetchError',
+                message: message,
+                screen: 'Player Screen',
+                api_url: EPG.config.DRM_URL
+            });
+        }
+
         const xhr = new XMLHttpRequest();
         xhr.open('GET', EPG.config.DRM_URL, true);
         xhr.setRequestHeader('Authorization', 'Bearer ' + EPG.state.jwt);
@@ -513,22 +531,32 @@ EPG.network = {
                             if (result.playreadylicense) localStorage.setItem('playreadylicense', result.playreadylicense);
                             EPG.state.drmData = result;
                             if (callback) callback(result);
+                        } else {
+                            reportFailure('DRM key response has no data: ' + (result.message || ''));
                         }
                     } catch (e) {
                         // console.error('JSON parse error:', e);
+                        reportFailure('DRM key response parse error: ' + e.message);
                     }
+                } else if (xhr.status !== 0) {
+                    reportFailure('DRM key request failed: HTTP ' + xhr.status);
                 }
             }
         };
 
         xhr.onerror = function () {
             //console.error('Network error');
+            reportFailure('DRM key request network error');
+        };
+        xhr.ontimeout = function () {
+            reportFailure('DRM key request timed out');
         };
 
         try {
             xhr.send();
         } catch (e) {
             //console.error('Send error:', e);
+            reportFailure('DRM key request could not be sent: ' + e.message);
         }
     }
 };

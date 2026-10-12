@@ -401,6 +401,8 @@ function clearSession() {
     localStorage.removeItem("userrole");
     localStorage.removeItem("is_custom_user");
     localStorage.removeItem("user_type");
+    localStorage.removeItem("is_hoa_main_user");
+    localStorage.removeItem("is_hoa_sub_user");
     localStorage.removeItem("jwt token");
     localStorage.removeItem("rooms");
     localStorage.removeItem("personaldevicename_popup");
@@ -437,7 +439,7 @@ async function syncRoom(roomid) {
                 return 'auth';
             }
             if (result.response_code === 410) {
-                AuthSession.handleSubscriptionExpired(result.subscribedmsgis || result.message);
+                AuthSession.handleSubscriptionExpired(result.subscribedmsgis || result.message, result);
                 return 'auth';
             }
 
@@ -470,7 +472,7 @@ async function hotelrooms() {
         }
         if (result.response_code === 410) {
             LoadingManager.hide();
-            AuthSession.handleSubscriptionExpired(result.subscribedmsgis || result.message);
+            AuthSession.handleSubscriptionExpired(result.subscribedmsgis || result.message, result);
             return;
         }
 

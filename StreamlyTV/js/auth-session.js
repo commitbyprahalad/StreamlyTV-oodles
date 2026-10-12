@@ -19,7 +19,25 @@ const AuthSession = (function () {
     }
 
     // ─── Subscription Expired (410) ──────────────────────────────────────
-    function handleSubscriptionExpired(message) {
+    // A logged-in user always gets the subscription module — the same screen
+    // login opens on a 410. It re-checks POST /auth/subscription/check and
+    // shows Auto-Renewal Failed / Expired / the custom plan request, so the
+    // UI no longer depends on whether the plan ran out before login or while
+    // the app was open (EPG, player, settings, ...).
+    // Only without a session (no token to renew with) is the old message
+    // popup + logout used.
+    let _subscriptionRedirecting = false;
+
+    function handleSubscriptionExpired(message, data) {
+        if (localStorage.getItem('jwt token')) {
+            // Several requests can report 410 at once (addtorecent, DRM key,
+            // EPG...): redirect only once.
+            if (_subscriptionRedirecting) return;
+            _subscriptionRedirecting = true;
+            if (data && data.qrcode) localStorage.setItem('subscription_qrcode', data.qrcode);
+            goToSubscriptionScreen();
+            return;
+        }
         const msg = message || 'Your subscription has expired. Please visit https://streamlytv.com to update your plan.';
         PopupManager.showAlert(msg, function () {
             clearSessionStorage();
@@ -66,8 +84,8 @@ const AuthSession = (function () {
             handleSessionExpired();
             return true;
         }
-        if (data.response_code === 410) {
-            handleSubscriptionExpired(data.subscribedmsgis || data.message);
+        if (Number(data.response_code) === 410) {
+            handleSubscriptionExpired(data.subscribedmsgis || data.message, data);
             return true;
         }
         return false;
@@ -124,8 +142,8 @@ const AuthSession = (function () {
                             if (callback) callback('expired');
                             return;
                         }
-                        if (data.response_code === 410) {
-                            handleSubscriptionExpired(data.subscribedmsgis || data.message);
+                        if (Number(data.response_code) === 410) {
+                            handleSubscriptionExpired(data.subscribedmsgis || data.message, data);
                             if (callback) callback('expired');
                             return;
                         }

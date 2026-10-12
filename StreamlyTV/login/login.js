@@ -93,73 +93,9 @@ function openExitPopup() {
     });
 }
 
-// ─── Device Info (safe Tizen wrappers) ───────────────────────────────────────
-
-function getDeviceId() {
-    try {
-        return tizen.systeminfo.getCapability("http://tizen.org/system/tizenid") || "";
-    } catch (e) {
-        console.warn("Could not get Tizen ID:", e);
-        return "unknown-device-" + Date.now();
-    }
-}
-
-function getTVVersion() {
-    try {
-        return webapis.tvinfo.getVersion() || "unknown";
-    } catch (e) {
-        console.warn("Could not get TV version:", e);
-        return "unknown";
-    }
-}
-
-function getTVModel() {
-    try {
-        return webapis.productinfo.getModel() || "unknown";
-    } catch (e) {
-        console.warn("Could not get TV model:", e);
-        return "unknown";
-    }
-}
-
-// ─── Shared device payload builder ───────────────────────────────────────────
-// Every login flow (email, passcode, QR) must send the SAME device info to the
-// backend so device-limit tracking / device list / analytics stay consistent.
-
-function buildDevicePayload() {
-    const uid = getDeviceId();
-    const version = getTVVersion();
-    const deviceModel = getTVModel();
-    const deviceFriendly = "Samsung " + deviceModel;
-    const buildVersion = tizen.application.getCurrentApplication().appInfo.version;
-    const deviceOsVersion = webapis.productinfo.getRealModel
-        ? webapis.productinfo.getRealModel()
-        : "9.0";
-    const zipcode = localStorage.getItem('streamly_zipcode') || "302020";
-    const deviceTitle = "SamsungTV";
-
-    return {
-        uid: uid,
-        version: version,
-        deviceModel: deviceModel,
-        deviceFriendly: deviceFriendly,
-        buildVersion: buildVersion,
-        deviceOsVersion: deviceOsVersion,
-        zipcode: zipcode,
-        deviceTitle: deviceTitle
-    };
-}
-
-function appendDeviceFields(formData, device) {
-    formData.append("deviceid", device.uid);
-    formData.append("devicefriendlyname", device.deviceFriendly);
-    formData.append("version", device.version);
-    formData.append("device_title", device.deviceTitle);
-    formData.append("device_model", device.deviceModel);
-    formData.append("build_version", device.buildVersion);
-    formData.append("device_os_version", device.deviceOsVersion);
-    formData.append("zipcode", device.zipcode);
-}
+// Device info (getDeviceId / buildDevicePayload / appendDeviceFields) and
+// saveLoginSession live in ../js/login-session.js, shared with the
+// device-limit screen's re-login.
 
 // ─── Shared 479 (device limit) handler ───────────────────────────────────────
 // Same UX for all three flows: save whatever device list / identity info we
@@ -918,28 +854,6 @@ function fetchWithRetry(url, options, retries, delay) {
 // gets stored in localStorage and where the user is redirected to next.
 // =============================================================================
 
-// Everything later screens read from localStorage after a login.
-function saveLoginSession(data, email, uid, version) {
-    localStorage.setItem("user_id", String(data.user.id));
-    localStorage.setItem("email", sanitize(email));
-    localStorage.setItem("deviceid", sanitize(uid));
-    localStorage.setItem("version", sanitize(version));
-    localStorage.setItem("personaldeviceid", sanitize(data.personaldeviceid));
-    localStorage.setItem("devicetype", sanitize(data.device_type));
-    localStorage.setItem("userrole", sanitize(data.userrole));
-    localStorage.setItem("is_custom_user", String(data.user.is_custom_user));
-    localStorage.setItem("user_type", sanitize(data.user.user_type || ""));
-    localStorage.setItem("jwt token", data.access_token);
-    localStorage.setItem("rooms", JSON.stringify(data.rooms || []));
-    localStorage.setItem("personaldevicename_popup", data.personaldevicename_popup ? "true" : "false");
-    localStorage.setItem("devicename", sanitize(data.devicename || ""));
-
-    // Save zipcode from login response if available
-    if (data.user && data.user.zipcode) {
-        localStorage.setItem('streamly_zipcode', data.user.zipcode);
-    }
-}
-
 // 410 on login: the account is valid but the subscription is expired or its
 // auto-renewal failed. The response still carries a token, so keep the
 // session and open the subscription module (custom plan request or QR
@@ -955,7 +869,9 @@ function handleSubscriptionExpiredLogin(data, email, device) {
     if (data.qrcode) {
         localStorage.setItem("subscription_qrcode", data.qrcode);
     }
-    AuthSession.goToSubscriptionScreen();
+    CrashLogger.flush(function () {
+        AuthSession.goToSubscriptionScreen();
+    });
 }
 
 function handleLoginResponse(data, email, uid, version) {
@@ -985,7 +901,11 @@ function handleLoginResponse(data, email, uid, version) {
     }
 
     saveLoginSession(data, email, uid, version);
-    AuthSession.continueAfterLogin();
+    // Upload crash reports queued since the last session before leaving
+    // the login screen (navigating away would abort the request).
+    CrashLogger.flush(function () {
+        AuthSession.continueAfterLogin();
+    });
 }
 
 // =============================================================================

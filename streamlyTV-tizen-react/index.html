@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1920, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="StreamlyTV" />
+  <title>StreamlyTV</title>
+  <!-- Samsung TV web APIs (AVPlay, productinfo, tvinfo, network). Resolved
+       by the TV at runtime; harmlessly 404s in a desktop browser. -->
+  <script src="$WEBAPIS/webapis/webapis.js"></script>
+</head>
+
+<body>
+  <!-- Samsung AVPlay renders on the TV's video plane, under the web page.
+       It must live in the DOM from the start, outside React. -->
+  <object id="av-player" type="application/avplayer" class="av-player"></object>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
+</html>

@@ -32,7 +32,9 @@ EPG.focus = {
         popupButtonIndex: 0,
         backKeyCount: 0, // ⭐ Progressive BACK counter
         lastKeyTime: 0,
-        KEY_REPEAT_DELAY: 100, // Increased from 80 to 100 for smoother navigation
+        // Only guards against a flood of auto-repeat events; every real press
+        // is handled (the old 100ms window silently dropped quick presses).
+        KEY_REPEAT_DELAY: 40,
         playedFromLiveProgram: false, // true when user directly played a live program cell
         focusTime: null, // UP/DOWN anchor time (sec), valid while focusAnchorEl is focused
         focusAnchorEl: null
@@ -47,8 +49,18 @@ EPG.focus = {
         programRows: null, // NEW: Cache program rows
         timeHeader: null,
         liveButton: null,
-        settingsButton: null
+        settingsButton: null,
+        sidebarHeight: 0,   // viewport sizes, read once (not on every key press)
+        gridWidth: 0,
+        dayIndicatorHeight: 0
     },
+
+    // Vertical scroll target, applied once per animation frame so a burst of
+    // presses costs one scroll instead of one per press.
+    _pendingScrollTop: null,
+    _lastScrollTop: -1,
+    _scrollFrameQueued: false,
+    _liveButtonState: null,
 
     // Conditional logging wrapper
     log: function () {
@@ -77,7 +89,15 @@ EPG.focus = {
         // Cache program rows for faster access
         if (this.cache.programGrid) {
             this.cache.programRows = this.cache.programGrid.getElementsByClassName('program-row');
+            this.cache.gridWidth = this.cache.programGrid.clientWidth;
         }
+        if (this.cache.channelSidebar) {
+            this.cache.sidebarHeight = this.cache.channelSidebar.clientHeight;
+            const dayIndicator = document.getElementById('day-indicator');
+            this.cache.dayIndicatorHeight = dayIndicator ? dayIndicator.offsetHeight : 0;
+        }
+        // The grid may have been re-rendered: don't trust the last scroll
+        this._lastScrollTop = -1;
     },
 
     // Get all channel elements
@@ -113,13 +133,14 @@ EPG.focus = {
             (this.state.currentContext === 'PROGRAM' && this.state.programIndex === 0)
         );
 
-        if (shouldShowLive) {
-            this.cache.liveButton.textContent = 'LIVE';
-            this.cache.liveButton.classList.add('is-live');
-        } else {
-            this.cache.liveButton.textContent = 'GO LIVE';
-            this.cache.liveButton.classList.remove('is-live');
-        }
+        this.setLiveButton(shouldShowLive);
+    },
+
+    setLiveButton: function (isLive) {
+        if (this._liveButtonState === isLive) return;
+        this._liveButtonState = isLive;
+        this.cache.liveButton.textContent = isLive ? 'LIVE' : 'GO LIVE';
+        this.cache.liveButton.classList.toggle('is-live', isLive);
     },
 
     // Clear all focus WITH CSS CLASS REMOVAL
@@ -128,12 +149,10 @@ EPG.focus = {
 
         if (self.cache.liveButton) {
             self.cache.liveButton.classList.remove('focused');
-            self.cache.liveButton.blur();
         }
 
         if (self.cache.settingsButton) {
             self.cache.settingsButton.classList.remove('focused');
-            self.cache.settingsButton.blur();
         }
 
         // Only touch elements that actually carry a focus class, instead of
@@ -149,7 +168,6 @@ EPG.focus = {
         const focused = Array.prototype.slice.call(container.getElementsByClassName(className));
         for (let i = 0; i < focused.length; i++) {
             focused[i].classList.remove(className);
-            focused[i].blur();
         }
     },
 
@@ -162,10 +180,8 @@ EPG.focus = {
 
         if (this.cache.liveButton) {
             this.cache.liveButton.classList.add('focused');
-            this.cache.liveButton.focus();
             // ⭐ FIXED: Update button to show "GO LIVE" when focused
-            this.cache.liveButton.textContent = 'GO LIVE';
-            this.cache.liveButton.classList.remove('is-live');
+            this.setLiveButton(false);
         }
     },
     goLive: function () {
@@ -210,7 +226,6 @@ EPG.focus = {
 
         if (this.cache.settingsButton) {
             this.cache.settingsButton.classList.add('focused');
-            this.cache.settingsButton.focus();
             this.log('FOCUSED: Settings Button');
         }
     },
@@ -229,14 +244,7 @@ EPG.focus = {
         const channel = channels[index];
         if (channel) {
             channel.classList.add('channel-focused');
-            channel.focus();
             this.scrollToChannel(index);
-
-            const url = channel.getAttribute('data-channel-url');
-            if (url) {
-                localStorage.setItem('channelUrl', url);
-            }
-
             this.updateLiveButtonState();
             this.log('FOCUSED: Channel #' + index);
         }
@@ -258,7 +266,6 @@ EPG.focus = {
         const program = programs[programIndex];
         if (program) {
             program.classList.add('program-focused');
-            program.focus();
             this.scrollToChannel(channelIndex);
             this.scrollToProgram(program);
             this.updateLiveButtonState();
@@ -266,30 +273,94 @@ EPG.focus = {
         }
     },
 
-    // Scroll to channel (OPTIMIZED - direct assignment, no requestAnimationFrame)
+    // Scroll to channel: keeps the focused row centred. Sizes come from the
+    // cache and the row count (reading scrollHeight/clientHeight here forced
+    // a layout of the whole grid on every press), and the write is deferred
+    // to the next frame so rapid presses collapse into a single scroll.
     scrollToChannel: function (channelIndex) {
         if (!this.cache.channelSidebar || !this.cache.programGrid) return;
 
-        // Use channel height of 125px
-        let targetScroll = channelIndex * 125 - (this.cache.channelSidebar.clientHeight / 2) + 62.5;
-        targetScroll = Math.max(0, Math.min(targetScroll, this.cache.channelSidebar.scrollHeight - this.cache.channelSidebar.clientHeight));
+        const ROW = 125;
+        if (!this.cache.sidebarHeight) this.cache.sidebarHeight = this.cache.channelSidebar.clientHeight;
+        const viewH = this.cache.sidebarHeight;
+        // The sidebar also holds the day indicator above the first row, so
+        // its scroll range = rows + indicator - viewport (same as the grid's,
+        // whose viewport is shorter by the time header of equal height)
+        const rows = this.cache.programRows ? this.cache.programRows.length : 0;
+        const maxScroll = Math.max(0, rows * ROW + this.cache.dayIndicatorHeight - viewH);
 
-        this.cache.channelSidebar.scrollTop = targetScroll;
-        this.cache.programGrid.scrollTop = targetScroll;
+        let targetScroll = channelIndex * ROW - (viewH / 2) + ROW / 2;
+        targetScroll = Math.round(Math.max(0, Math.min(targetScroll, maxScroll)));
+
+        this._pendingScrollTop = targetScroll;
+        if (this._scrollFrameQueued) return;
+        this._scrollFrameQueued = true;
+
+        const self = this;
+        const nextFrame = window.requestAnimationFrame || function (fn) { return setTimeout(fn, 16); };
+        nextFrame(function () {
+            self._scrollFrameQueued = false;
+            const top = self._pendingScrollTop;
+            if (top === null || top === self._lastScrollTop) return;
+            self._lastScrollTop = top;
+            self.applyRowWindow(top);
+            self.cache.channelSidebar.scrollTop = top;
+            self.cache.programGrid.scrollTop = top;
+        });
     },
 
-    // Scroll to program (horizontal)
+    // Paint only the rows near the viewport. On each scroll the browser
+    // repaints the grid plus a ~4000px margin around it (dozens of rows of
+    // programme cards) — on TV hardware that paint was the lag after
+    // channel 6. Far rows get visibility:hidden: they keep their place in
+    // the layout (scroll positions are unchanged) but cost nothing to paint.
+    // Re-rendered / newly appended rows start visible, so the worst case is
+    // the old behaviour, never a blank row.
+    ROW_WINDOW_MARGIN: 4, // rows kept painted above and below the viewport
+
+    applyRowWindow: function (scrollTop) {
+        const ROW = 125;
+        const viewH = this.cache.sidebarHeight || 1000;
+        const first = Math.floor(scrollTop / ROW) - this.ROW_WINDOW_MARGIN;
+        const last = Math.ceil((scrollTop + viewH) / ROW) + this.ROW_WINDOW_MARGIN;
+        this._setFar(this.cache.programRows, first, last);
+        this._setFar(this.getChannels(), first, last);
+    },
+
+    // Rows were (re)rendered or appended: hide the far ones now, while the
+    // guide is loading, instead of on the next key press.
+    reapplyRowWindow: function () {
+        if (!this.cache.programGrid) return;
+        this.applyRowWindow(this._lastScrollTop > 0 ? this._lastScrollTop : 0);
+    },
+
+    _setFar: function (list, first, last) {
+        if (!list) return;
+        for (let i = 0; i < list.length; i++) {
+            const far = i < first || i > last;
+            // Cached flag: only rows that change state touch the DOM
+            if (list[i]._far === far) continue;
+            list[i]._far = far;
+            if (far) list[i].classList.add('epg-far');
+            else list[i].classList.remove('epg-far');
+        }
+    },
+
+    // Scroll to program (horizontal). Position comes from the card's inline
+    // left/width (set at render) instead of getBoundingClientRect, which
+    // forced a layout on every LEFT/RIGHT.
     scrollToProgram: function (programElement) {
         if (!this.cache.programGrid || !this.cache.timeHeader) return;
 
-        const containerRect = this.cache.programGrid.getBoundingClientRect();
-        const elementRect = programElement.getBoundingClientRect();
-        const offsetFromLeft = elementRect.left - containerRect.left;
+        if (!this.cache.gridWidth) this.cache.gridWidth = this.cache.programGrid.clientWidth;
+        const viewW = this.cache.gridWidth;
+        const scrollLeft = this.cache.programGrid.scrollLeft;
+        const left = parseFloat(programElement.style.left) || 0;
+        const width = parseFloat(programElement.style.width) || 0;
+        const offsetFromLeft = left - scrollLeft;
 
-        if (offsetFromLeft < 0 || offsetFromLeft + elementRect.width > containerRect.width) {
-            let targetScroll = this.cache.programGrid.scrollLeft + offsetFromLeft - 100;
-            targetScroll = Math.max(0, targetScroll);
-
+        if (offsetFromLeft < 0 || offsetFromLeft + width > viewW) {
+            const targetScroll = Math.max(0, left - 100);
             this.cache.programGrid.scrollLeft = targetScroll;
             this.cache.timeHeader.scrollLeft = targetScroll;
         }

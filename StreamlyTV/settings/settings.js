@@ -195,6 +195,38 @@ const Settings = (function () {
     return String(val).replace(/[<>"'`]/g, "");
   }
 
+  // The API sometimes sends missing values as null and sometimes as the
+  // literal string "null"/"undefined" — treat all of those as absent.
+  function isPresent(val) {
+    if (val === null || val === undefined) return false;
+    const str = String(val).trim();
+    return str !== "" && str !== "null" && str !== "undefined";
+  }
+
+  function firstPresent(values) {
+    for (let i = 0; i < values.length; i++) {
+      if (isPresent(values[i])) return values[i];
+    }
+    return "";
+  }
+
+  // HOA Sub User (login response is_hoa_sub_user: true). Main and sub
+  // HOA users share userrole "hoa", so the flag is the only reliable
+  // signal. Delete Account is hidden for this role only — other
+  // custom-user roles, including the HOA main user, keep it.
+  function isHoaSubUser(data) {
+    if (localStorage.getItem("is_hoa_sub_user") === "1") return true;
+    return !!data && data.is_hoa_sub_user === true;
+  }
+
+  // "1 month" / "3 months" from a plan's interval + interval_count
+  // (same format as the custom-plan cards on the subscription screen).
+  function intervalLabel(plan) {
+    if (!plan || !isPresent(plan.interval)) return "";
+    const count = Number(plan.interval_count) || 1;
+    return count + " " + plan.interval + (count > 1 ? "s" : "");
+  }
+
   // Same "time ago" helper used on the connected-devices screen (device.js)
   function timeAgo(dateString) {
     if (!dateString) return "N/A";
@@ -502,7 +534,9 @@ const Settings = (function () {
       '<div class="account-details-grid" id="account-details-grid">' +
       '<div class="account-detail-item"><div class="detail-label">Loading...</div><div class="detail-value">Please wait</div></div>' +
       "</div>" +
-      '<button class="delete-account-btn" id="delete-account-btn" tabindex="-1">Delete Account</button>' +
+      (isHoaSubUser()
+        ? ""
+        : '<button class="delete-account-btn" id="delete-account-btn" tabindex="-1">Delete Account</button>') +
       "</div>" +
       // Subscription
       '<div class="subscription-section content-focusable" id="subscription-section" tabindex="0">' +
@@ -632,6 +666,13 @@ const Settings = (function () {
         "</div></div>";
     }
 
+    // The API response can identify an HOA Sub User even when the role
+    // stored at login didn't, so re-check and drop the button here too.
+    if (isHoaSubUser(data)) {
+      const deleteBtn = document.getElementById("delete-account-btn");
+      if (deleteBtn) deleteBtn.remove();
+    }
+
     updateSubscriptionCard(data);
     updateCardDetails(data);
 
@@ -677,9 +718,21 @@ const Settings = (function () {
     const planFallbackAmount = planData.amount
       ? " ($" + (planData.amount / 100).toFixed(2) + ")"
       : "";
+    const stripePlanName = firstPresent([planData.nickname, planData.name]);
+    // HOA sub-users have no Stripe subscription: setting-details sends
+    // the Stripe fields as null (or the literal string "null"), and the
+    // plan lives in the custom-subscription fields / interval instead.
+    const customSub = data.custom_subscription || data.custom_plan || {};
     const planDisplay =
-      subscriptionData.name ||
-      (planData.nickname || planData.name || "—") + planFallbackAmount;
+      firstPresent([
+        subscriptionData.name,
+        stripePlanName && stripePlanName + planFallbackAmount,
+        customSub.name,
+        customSub.plan_name,
+        subscriptionData.plan_type,
+        data.plan_name,
+        intervalLabel(customSub) || intervalLabel(planData),
+      ]) || "—";
 
     const canceled = !!subscriptionData.canceled;
 
@@ -687,10 +740,17 @@ const Settings = (function () {
     // depending on whether the plan is still running (renewal) or has
     // been canceled and is just counting down to expiry.
     let dateValue =
-      subscriptionData.renewaldatetime ||
-      subscriptionData.plan_expired_at ||
-      data.renewaldatetime ||
-      "—";
+      firstPresent([
+        subscriptionData.renewaldatetime,
+        subscriptionData.plan_expired_at,
+        data.renewaldatetime,
+        data.custom_subscription_expired_at,
+        customSub.expired_at,
+        customSub.plan_expired_at,
+        customSub.end_date,
+        data.plan_expired_at,
+      ]) || "—";
+    dateValue = String(dateValue);
     if (dateValue !== "—" && dateValue.indexOf("-") > 0) {
       const parts = dateValue.split(" ")[0].split("-");
       if (parts.length === 3) {
@@ -2987,12 +3047,15 @@ const Settings = (function () {
       }
 
       // Account Details card — ENTER starts the delete-account flow,
-      // wherever on the card the remote focus currently is.
+      // wherever on the card the remote focus currently is. HOA Sub Users
+      // have no Delete Account button, so ENTER is a no-op for them.
       if (
         el.classList.contains("account-details-section") ||
         el.id === "delete-account-btn"
       ) {
-        startDeleteAccountFlow();
+        if (document.getElementById("delete-account-btn")) {
+          startDeleteAccountFlow();
+        }
         return;
       }
 

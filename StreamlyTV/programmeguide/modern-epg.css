@@ -324,6 +324,12 @@ body {
     display: none;
 }
 
+/* Rows far outside the viewport (set by EPG.focus.applyRowWindow): still
+   laid out, so scrolling is unchanged, but skipped when painting */
+.epg-far {
+    visibility: hidden;
+}
+
 /* Program Row */
 .program-row {
     height: 125px;

@@ -31,6 +31,7 @@ const API = {
   // Programme guide / player
   EPG_GUIDE: API_BASE_URL + "/auth/epg-guide",
   EPG_GUIDE_V2: API_BASE_URL + "/v2/auth/epg-guide", // paginated: page, limit -> has_more
+  EPG_GUIDE_V2_TEST: API_BASE_URL + "/v2/auth/epg-guide-test", // offset: start, limit
   PROGRAM_DETAILS: API_BASE_URL + "/auth/program-details",
   DRM_KEY: API_BASE_URL + "/auth/getdrmkey",
   ALL_GENRE: API_BASE_URL + "/auth/all-genre",
@@ -58,19 +59,26 @@ const API = {
   SUBSCRIPTION_CHECK: API_BASE_URL + "/auth/subscription/check",
   CUSTOM_SUBSCRIPTION_PLANS: API_BASE_URL + "/auth/custom/subscription/plan",
   SUBSCRIPTION_PLAN_REQUEST: API_BASE_URL + "/auth/subscription/plan-request",
+
+  // Crash / error reports (see js/crash-logger.js). Points at staging, where
+  // the endpoint is deployed; switch to API_BASE_URL once it's on production.
+  CRASH_REPORT_STORE: "https://staging.streamlytv.com/api/crash-report/store",
 };
 
 // ─── Session storage helpers ────────────────────────────────────────────────
 // "Remember Me" on the login screen must survive logout / session expiry, so
 // these keys are kept when the rest of localStorage is wiped.
 const REMEMBER_ME_KEYS = ["remember_me", "remember_me_email", "remember_me_password"];
+// Unsent crash reports must also survive logout: they're uploaded on the
+// next login (see js/crash-logger.js).
+const PERSISTENT_KEYS = REMEMBER_ME_KEYS.concat(["crash_reports"]);
 
 // Use instead of localStorage.clear() when logging the user out.
 function clearSessionStorage() {
   const kept = {};
-  for (let i = 0; i < REMEMBER_ME_KEYS.length; i++) {
-    const value = localStorage.getItem(REMEMBER_ME_KEYS[i]);
-    if (value !== null) kept[REMEMBER_ME_KEYS[i]] = value;
+  for (let i = 0; i < PERSISTENT_KEYS.length; i++) {
+    const value = localStorage.getItem(PERSISTENT_KEYS[i]);
+    if (value !== null) kept[PERSISTENT_KEYS[i]] = value;
   }
   localStorage.clear();
   for (const key in kept) {
