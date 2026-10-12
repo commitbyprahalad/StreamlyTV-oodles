@@ -45,6 +45,16 @@ const AuthSession = (function () {
         });
     }
 
+    // HTTP status 410 (the body may be empty or carry the backend message):
+    // same handling as response_code 410 in a 200 body. Every caller that
+    // only reads 200 responses checks this first, so no request path can
+    // fall back to an error popup for an expired subscription.
+    function handleHttp410(responseText) {
+        let data = null;
+        try { data = responseText ? JSON.parse(responseText) : null; } catch (e) { data = null; }
+        handleSubscriptionExpired(data && (data.subscribedmsgis || data.message), data);
+    }
+
     // ─── Subscription screen (expired / renewal failed) ─────────────────
     // Set while the user is logged in but blocked on the subscription
     // module, so index.html reopens that screen instead of the EPG.
@@ -150,6 +160,13 @@ const AuthSession = (function () {
                     } catch (e) {
                         // ignore parse errors
                     }
+                    // HTTP 410 whose body didn't say so (empty / other JSON)
+                    // is still an expired subscription
+                    if (xhr.status === 410) {
+                        handleHttp410(xhr.responseText);
+                        if (callback) callback('expired');
+                        return;
+                    }
                 }
                 // Any other status or response without 401/410,
                 // is silently ignored per requirements.
@@ -177,6 +194,7 @@ const AuthSession = (function () {
     return {
         handleSessionExpired: handleSessionExpired,
         handleSubscriptionExpired: handleSubscriptionExpired,
+        handleHttp410: handleHttp410,
         goToSubscriptionScreen: goToSubscriptionScreen,
         isSubscriptionBlocked: isSubscriptionBlocked,
         continueAfterLogin: continueAfterLogin,

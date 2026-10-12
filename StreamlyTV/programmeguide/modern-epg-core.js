@@ -274,6 +274,12 @@ EPG.network = {
                 onError('auth');
                 return;
             }
+            if (xhr.status === 410) {
+                done = true;
+                AuthSession.handleHttp410(xhr.responseText);
+                onError('auth');
+                return;
+            }
             if (xhr.status !== 200) {
                 console.error('EPG HTTP error:', xhr.status);
                 fail('http');
@@ -454,6 +460,11 @@ EPG.network = {
                     return;
                 }
 
+                if (xhr.status === 410) {
+                    AuthSession.handleHttp410(xhr.responseText);
+                    return;
+                }
+
                 if (xhr.status === 200) {
                     try {
                         const data = JSON.parse(xhr.responseText);
@@ -517,6 +528,13 @@ EPG.network = {
                 if (xhr.status === 401) {
                     // console.error('⚠️ Session expired (401 Unauthorized)');
                     showSessionExpirePopup(); // ✅ Call popup function
+                    return;
+                }
+
+                // Also the in-player session heartbeat: an expired
+                // subscription opens the subscription screen.
+                if (xhr.status === 410) {
+                    AuthSession.handleHttp410(xhr.responseText);
                     return;
                 }
 
@@ -712,6 +730,10 @@ EPG.network.storeSubSession = function () {
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState !== 4) return;
+        if (xhr.status === 410) {
+            AuthSession.handleHttp410(xhr.responseText);
+            return;
+        }
         if (xhr.status === 200 || xhr.status === 201) {
             console.log('storeSubSession: metadata updated successfully');
         } else if (xhr.status === 401) {

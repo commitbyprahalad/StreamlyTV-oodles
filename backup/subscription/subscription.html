@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <!-- Google Analytics (GA4) + Tag Manager -->
+    <script src="../js/analytics.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="description" content="StreamlyTV subscription expired / renewal failed" />
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/PopupManager.css">
+    <link rel="stylesheet" href="../css/LoadingManager.css">
+    <link rel="stylesheet" type="text/css" href="../css/all.min.css" />
+    <link rel="stylesheet" href="subscription.css">
+    <script type="text/javascript" src="../js/api-config.js"></script>
+    <script type="text/javascript" src="../js/PopupManager.js"></script>
+    <script type="text/javascript" src="../js/LoadingManager.js"></script>
+    <script type="text/javascript" src="../js/auth-session.js"></script>
+    <script type="text/javascript" src="subscription.js"></script>
+    <script type="text/javascript" src="$WEBAPIS/webapis/webapis.js"></script>
+    <title>Subscription</title>
+</head>
+
+<body class="sub-body">
+
+    <div class="sub-card" id="sub-card" style="display:none;">
+        <h2 class="sub-title" id="sub-title">Subscription Expired</h2>
+
+        <div class="sub-split">
+
+            <!-- ═══ Custom user: previous plan + plan request ═══ -->
+            <div class="sub-left" id="custom-left">
+                <i class="fas fa-exclamation-triangle sub-warning-icon"></i>
+                <p class="sub-left-text">Your subscription has expired. Renew your plan to continue watching.</p>
+                <div class="prev-plan">
+                    <div class="prev-plan-crown"><i class="fas fa-crown"></i></div>
+                    <div class="prev-plan-info">
+                        <div class="prev-plan-title">Previous Plan</div>
+                        <div class="prev-plan-expiry" id="prev-plan-expiry"></div>
+                    </div>
+                    <div class="prev-plan-devices">
+                        <div class="prev-plan-devices-label">Devices</div>
+                        <div class="prev-plan-devices-count" id="prev-plan-devices"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ Web user: QR to renew on the website ═══ -->
+            <div class="sub-left" id="qr-left">
+                <div class="sub-qr-box">
+                    <img id="sub-qr-image" class="sub-qr-image" alt="QR Code">
+                </div>
+            </div>
+
+            <div class="sub-divider"></div>
+
+            <div class="sub-right">
+                <!-- Custom user -->
+                <div id="custom-right">
+                    <p class="sub-steps-heading">How to continue watching streamly</p>
+                    <ul class="sub-steps">
+                        <li><span class="sub-step-icon"><i class="fas fa-hand-pointer"></i></span>Select a Plan</li>
+                        <li><span class="sub-step-icon"><i class="fas fa-paper-plane"></i></span>Click on Request Now</li>
+                        <li><span class="sub-step-icon"><i class="fas fa-clock"></i></span>Waiting For Approval</li>
+                    </ul>
+                    <p class="sub-request-note" id="sub-request-note"></p>
+                    <div class="plan-grid" id="plan-grid"></div>
+                </div>
+
+                <!-- Web user -->
+                <div id="qr-right">
+                    <p class="sub-message" id="qr-message"></p>
+                    <p class="sub-visit" id="qr-visit"></p>
+                    <p class="sub-steps-heading sub-steps-heading-bar">QR Steps</p>
+                    <ul class="sub-steps" id="qr-steps"></ul>
+                </div>
+
+                <div class="sub-actions">
+                    <button type="button" class="sub-btn sub-btn-outline" id="sub-primary-btn"></button>
+                    <button type="button" class="sub-btn sub-btn-yellow" id="sub-signout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Cancel Subscription: password verification ═══ -->
+    <div class="sub-overlay" id="pwd-overlay" style="display:none;">
+        <div class="sub-modal">
+            <div class="sub-modal-title">Confirm Your Password</div>
+            <div class="sub-modal-text">Please enter your account password to cancel your current subscription.</div>
+            <input type="password" id="pwd-input" class="sub-modal-input" readonly autocomplete="off"
+                placeholder="Enter password">
+            <div class="sub-modal-error" id="pwd-error"></div>
+            <div class="sub-modal-buttons">
+                <button type="button" class="sub-btn sub-btn-outline" id="pwd-cancel-btn">Cancel</button>
+                <button type="button" class="sub-btn sub-btn-yellow" id="pwd-submit-btn">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PopupManager + LoadingManager handle alerts / loader dynamically -->
+</body>
+
+</html>

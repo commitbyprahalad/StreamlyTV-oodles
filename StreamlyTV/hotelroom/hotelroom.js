@@ -430,6 +430,10 @@ async function syncRoom(roomid) {
             API.SYNC_SESSION_WITH_ROOM,
             { method: 'POST', headers: headers, body: formdata }
         );
+        if (response.status === 410) {
+            AuthSession.handleHttp410(await response.text().catch(function () { return ''; }));
+            return 'auth';
+        }
         if (response.ok) {
             const result = await response.json();
 
@@ -462,6 +466,11 @@ async function hotelrooms() {
         const res = await fetch(API.GET_HOTEL_ROOMS, {
             method: 'POST', headers: headers, body: new FormData()
         });
+        if (res.status === 410) {
+            LoadingManager.hide();
+            AuthSession.handleHttp410(await res.text().catch(function () { return ''; }));
+            return;
+        }
         const result = await res.json();
 
         // Check for session/subscription expired

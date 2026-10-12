@@ -131,6 +131,11 @@ function doPersonalDeviceSave(deviceName) {
                 });
                 return null;
             }
+            if (response.status === 410) {
+                hideLoader();
+                response.text().then(AuthSession.handleHttp410, function () { AuthSession.handleHttp410(''); });
+                return null;
+            }
             if (!response.ok) {
                 hideLoader();
                 PopupManager.showAlert("Server error (" + response.status + "). Please try again.");

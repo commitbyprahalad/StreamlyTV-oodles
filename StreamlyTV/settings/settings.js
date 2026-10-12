@@ -284,6 +284,12 @@ const Settings = (function () {
           return;
         }
 
+        if (xhr.status === 410) {
+          AuthSession.handleHttp410(xhr.responseText);
+          if (callback) callback(null);
+          return;
+        }
+
         if (xhr.status === 200) {
           try {
             const data = JSON.parse(xhr.responseText);
@@ -373,6 +379,11 @@ const Settings = (function () {
           if (typeof AuthSession !== "undefined") {
             AuthSession.handleSessionExpired();
           }
+          if (callback) callback(null);
+          return;
+        }
+        if (xhr.status === 410) {
+          AuthSession.handleHttp410(xhr.responseText);
           if (callback) callback(null);
           return;
         }
