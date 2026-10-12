@@ -2036,12 +2036,13 @@ const Settings = (function () {
         if (confirmed) {
           finalizeAccountDeletion();
         } else {
-          // Stay on the OTP screen so the user can back out cleanly.
-          deleteOtpPad.focusVerify();
+          // No = cancel the whole Delete Account action: close the OTP
+          // popup too and return to the Account page. Nothing is deleted.
+          closeDeleteOtpOverlay();
         }
       },
       "Yes",
-      "Cancel",
+      "No",
     );
   }
 
