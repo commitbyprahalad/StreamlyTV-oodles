@@ -227,6 +227,8 @@ body {
 
 .plan-card.selected {
   border-color: var(--color-primary);
+  /* Stays visibly highlighted while focus is on Request Now */
+  background: var(--color-primary-a35);
 }
 
 .plan-card:focus {

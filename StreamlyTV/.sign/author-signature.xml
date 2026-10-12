@@ -234,13 +234,13 @@ vdwkj9k4Uw==</DigestValue>
 </Reference>
 <Reference URI="device%2Fdevice.html">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>sCmXL9IpfhXqYVH7On5LRtCp7ZCv+3xpqO849eb3Yiva2Bsej322j6VddnqVMcKJOLABMZAm/fHn
-wam6g3Q3Yw==</DigestValue>
+<DigestValue>XdUcBdMRkuXBz/S2NN4D4iQkugmldEzLhNqXmRKwNE39SSjIaxFD1FwTTxWTnPDVJBCN+K46VKVg
+byfOwHayNg==</DigestValue>
 </Reference>
 <Reference URI="device%2Fdevice.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>cbmWD3KO4fGKBI+Rg13/3LlFaLvQV5IFjwcjhpi482aRm9VgovIhk6Bf1C6qRLDodNv9yGAZnWeP
-kWP8GCAzbA==</DigestValue>
+<DigestValue>ky/K2Er0qCsxwTF6xFcQ4vVzORWnDnAhPmGwmOb//PWp0RedZR57H6kY6cDkWt5XAT9K31NoY4v1
+sOhzB5z0EA==</DigestValue>
 </Reference>
 <Reference URI="eslint.config.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -274,8 +274,8 @@ ryil2n6j/Q==</DigestValue>
 </Reference>
 <Reference URI="hotelroom%2Fhotelroom.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>63oyWafSROXlkeyLLN4g5oUqW3jn9HHAMGymWK43SEXF4bnQvuYweC4F1zzhO9yMxVUFd30jTDCT
-bc4PhBvKXg==</DigestValue>
+<DigestValue>gqh2DvfDCKSIRA64CBbgUdlX37nuqlGkUvioybOUul1bfBizck5y9SCqbW5WAF6lFbI65xcgAr2y
+anWpxJ364A==</DigestValue>
 </Reference>
 <Reference URI="icon.png">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -494,8 +494,8 @@ IOYxXrMCYA==</DigestValue>
 </Reference>
 <Reference URI="js%2Fauth-session.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>JBZGvn0Gy6ri4GzjwrsraZHK91HlSu+GiqO6TGY41is3UdfEfnCG1TkKrckHh5MT6Xs/m2hVThR/
-yGR4RRY0OQ==</DigestValue>
+<DigestValue>OyIfRv8yOXZnqJSRP1j/724ZcBGeYSiylYvhD6YjOTB2KOwuNFa96kBV6Jb1qv6GZWUglC39EhkJ
+Ca0AW/Vs0A==</DigestValue>
 </Reference>
 <Reference URI="js%2Fcrash-logger.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -517,6 +517,11 @@ wSjEKAo3Pg==</DigestValue>
 <DigestValue>n42JE4YOjgh6yt34TbaY8qVQcEbuiZKF1Xwrh8waGKQp4kk+vbw7VFcyXvUDuF2pc/QCVhMvA2ZQ
 NWMTpAdXAQ==</DigestValue>
 </Reference>
+<Reference URI="js%2Flogin-session.js">
+<DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
+<DigestValue>JxNZxsuGqAuGZXv7ci4+O4wfhXqLodzAcI2XnMcs2B4lR6/vaICtxlLonSdehesiEQodGRTYPXGk
+BJ6sliF5Gg==</DigestValue>
+</Reference>
 <Reference URI="login%2Flogin.css">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
 <DigestValue>+MY898szu5t2aHyDElW7nBEKyxXDY9Y/xsTLItAPSHwSj2fF31ISSW0VLDZS77zJplrTqRFfaymP
@@ -524,13 +529,13 @@ WbTj3iqkww==</DigestValue>
 </Reference>
 <Reference URI="login%2Flogin.html">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>+GjK3/W8D8FgpMHqsWkzKtQmjnFNkEPd5bvP0xQBwfE4B17OUp3+rtax7t3MPr3zfSXLS4q7UM2u
-HuzUfbET6Q==</DigestValue>
+<DigestValue>ieHofwR7BZPkpgF5/qPg9NrEt3Efv7Wq6dlSals0mIqYnVpLCpc/WV0tq9I9OGtpQKVhg26rLA+l
+J2ylSkxGJw==</DigestValue>
 </Reference>
 <Reference URI="login%2Flogin.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>dPG5HYFZugLlFIXzPJGCD1MISzdtRQLdb7CefS3r6LMAYJgez/PCwiyCWVHefm2jjNOtNq5PcFhm
-XzS7LCeWdA==</DigestValue>
+<DigestValue>WT1wVHMwYDg8rnbOfl3qEtkMYh7iCNvnn8gimcYlDPK0zTTM33MtxqeRnDJ8VpFnnH2Z8G5OLaHG
+fhqX9WQmzQ==</DigestValue>
 </Reference>
 <Reference URI="package-lock.json">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -569,8 +574,8 @@ ihTDjQlp3Q==</DigestValue>
 </Reference>
 <Reference URI="programmeguide%2Fmodern-epg-core.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>0hoHyTOqORXH9qS0vpyd5L/84T6PA3UDP+AZL4wK0EmSGFQqsYLRnGhlE2gyBkWOiGll9dj/VlM3
-5EovjS04Yg==</DigestValue>
+<DigestValue>Isfvsv5GGP1GIn5epiO13dOKVlsBFOM26dacrbNPUJOQb7J8CEOIo7sFTEubeFaH/9uldYMHQuzb
+c4raZNbqnw==</DigestValue>
 </Reference>
 <Reference URI="programmeguide%2Fmodern-epg-keyboard.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -609,8 +614,8 @@ duiUCoUhxw==</DigestValue>
 </Reference>
 <Reference URI="subscription%2Fsubscription.css">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>Y3Yy82zHnF7TTR4sAhUyTBApAmtD1Z856K+EkoBlmmio7k9jrGbckjB99h9VDqXYl+WeFxvORFoS
-sYO5xspfQQ==</DigestValue>
+<DigestValue>koK7emwKopLhc95ojIUcn0TEnRE413MSVftKQCzJsZUFfCYrsdjqpBtPoZinJKPVfLEUxSfrLMjb
+3h+3a2ri5Q==</DigestValue>
 </Reference>
 <Reference URI="subscription%2Fsubscription.html">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -619,8 +624,8 @@ bHXJjJq60g==</DigestValue>
 </Reference>
 <Reference URI="subscription%2Fsubscription.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>ezKs56pUx9PDUeG6M+N0RkWyNXL+LkRCLTzWNnCjklu7h1iRMte5z1z0Sn9QtW/sPfRTjxL8BcNT
-1HuD9TGv8g==</DigestValue>
+<DigestValue>/JPkdQe58uaLhDKm4ja2IqoINQtVvqbhRQSuMa81KLFjH7+1eLvH0PwfxFDNpoLRYuQPKTHCQ3DR
+cAHKSaNPgg==</DigestValue>
 </Reference>
 <Reference URI="webfonts%2Ffa-brands-400.eot">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -707,11 +712,11 @@ QY10fG1EWQ==</DigestValue>
 </Reference>
 </SignedInfo>
 <SignatureValue>
-N5Mn3yhgBHuv3gr50QCheeTfwKQ4FGdxnV87QxRvCGP0n3ChSLyW9q8NEyMVCJGjr7XUEAcMiWSx
-Q93/iSQD2vcvEhxwbjm0ySRX0Z3Q+pF0mE6lxtr5i5+8T3OCF+J5UfnH9WXsmchn3SJbtClDhtos
-BpGzGd5aNL+skpfJnb56nlnIXe7AhG5haof3Ntcr9kHpIVGHmYmlrbOIJyZWq12eD9SqBUV5K/7U
-zj7CNx0sj0usn0wSVYJnI1BCbqRHP96gVtypP/arZXl3QbyUOTIChYNpHNbpKVYrwXrVzSdnA2+Q
-E/UHy60qqcPD1/ZwiZj4FAI8D9POBQeMj9w5cw==
+cg2msrUD7Obl7RBu0lS7I30y56bW9AyNo/oP+v6yu5e3+A7xUmhvD041gsuyKKNdspY8Zkal0qOh
+p271TJSr70+YTP6AaAZTTIjX9HA+dINaZj9F/HJJqkgboTBqiS0kI1X4P1RMa+p29D1Gnv1eZ7SV
+XycQ5P4miB8Wl9XQfyl+lsdoJ0JHuZri3AERUI2kaSMGcCku+U2BnD5Qji9ATEE6Q9mgHBlvtm7x
+dyrJOiex2CoJJg1/HCvi6cz21QNecNGtr0/MJPO+lbXBZUlWFeqhCJQWjSDPcgkg84JJbQ4O0jy4
+Tkx2v9uYjb41is0289HFvsLyPiyde8tCiZj9Iw==
 </SignatureValue>
 <KeyInfo>
 <X509Data>

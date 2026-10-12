@@ -361,26 +361,36 @@ const SubscriptionScreen = (function () {
             const label = document.createElement('span');
             label.textContent = planLabel(plan);
             card.appendChild(label);
+            // Moving focus onto a plan selects (highlights) it — no popup
+            card.addEventListener('focus', onPlanFocus);
             card.addEventListener('click', onPlanSelect);
             dom.planGrid.appendChild(card);
         }
     }
 
+    // The focused plan is the selected one: highlight it in place (no
+    // re-render, so remote focus stays on the card).
+    function selectPlan(planId) {
+        if (state.requestStatus === 'under_review') return;
+        state.selectedPlanId = Number(planId);
+        const cards = dom.planGrid.querySelectorAll('.plan-card');
+        for (let i = 0; i < cards.length; i++) {
+            cards[i].classList.toggle('selected', Number(cards[i].getAttribute('data-plan-id')) === state.selectedPlanId);
+        }
+    }
+
+    function onPlanFocus(e) {
+        const card = e.currentTarget || this;
+        if (!card.disabled) selectPlan(card.getAttribute('data-plan-id'));
+    }
+
+    // OK on a plan: keep it selected and move on to Request Now. The
+    // confirmation is asked on Request Now, not here.
     function onPlanSelect(e) {
         const card = e.currentTarget || this;
         if (card.disabled) return;
-        const plan = findPlan(card.getAttribute('data-plan-id'));
-        if (!plan) return;
-
-        const name = plan.nickname || (planLabel(plan) + ' plan');
-        PopupManager.showConfirm('Are you sure you want to select ' + name + '?', function (confirmed) {
-            if (!confirmed) return;
-            state.selectedPlanId = Number(plan.id);
-            renderPlans();
-            // PopupManager restores focus to the (now re-rendered) card after
-            // this callback; move on to Request Now once it has.
-            setTimeout(function () { dom.primaryBtn.focus(); }, 0);
-        }, 'Yes', 'No');
+        selectPlan(card.getAttribute('data-plan-id'));
+        dom.primaryBtn.focus();
     }
 
     function updateRequestButton() {
@@ -395,11 +405,18 @@ const SubscriptionScreen = (function () {
 
     function submitPlanRequest() {
         if (state.requestStatus === 'under_review') return;
-        if (!state.selectedPlanId) {
-            PopupManager.showAlert('Please Select Plan');
+        const plan = state.selectedPlanId ? findPlan(state.selectedPlanId) : null;
+        if (!plan) {
+            PopupManager.showAlert('Please select plan');
             return;
         }
 
+        PopupManager.showConfirm('Are you sure you want to Request for ' + planLabel(plan) + ' custom plan?', function (confirmed) {
+            if (confirmed) sendPlanRequest();
+        }, 'Yes', 'No');
+    }
+
+    function sendPlanRequest() {
         const formData = new FormData();
         formData.append('plan_id', String(state.selectedPlanId));
 
@@ -576,7 +593,15 @@ const SubscriptionScreen = (function () {
         } else if (keyCode === KEYS.UP && r > 0) {
             rows[r - 1][Math.min(c, rows[r - 1].length - 1)].focus();
         } else if (keyCode === KEYS.DOWN && r < rows.length - 1) {
-            rows[r + 1][Math.min(c, rows[r + 1].length - 1)].focus();
+            // From any plan, DOWN goes to Request Now (not whichever button
+            // sits in the same column — the middle plan landed on Sign Out)
+            const below = rows[r + 1];
+            const onPlan = rows[r][c].classList && rows[r][c].classList.contains('plan-card');
+            if (onPlan && below.indexOf(dom.primaryBtn) !== -1) {
+                dom.primaryBtn.focus();
+            } else {
+                below[Math.min(c, below.length - 1)].focus();
+            }
         }
     }
 
