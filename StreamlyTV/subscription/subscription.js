@@ -273,11 +273,16 @@ const SubscriptionScreen = (function () {
             dom.qrSteps.appendChild(buildStep(screen.steps[i][0], screen.steps[i][1]));
         }
 
-        const qrcode = data.qrcode || localStorage.getItem('subscription_qrcode');
+        // QR from the check response, else the one saved at login. When the
+        // plan expires mid-session neither exists (login was still active),
+        // so build one for the website on the TV instead of showing an empty box.
+        let qrcode = data.qrcode || localStorage.getItem('subscription_qrcode');
         if (qrcode) {
             localStorage.setItem('subscription_qrcode', qrcode);
-            if (dom.qrImage.getAttribute('src') !== qrcode) dom.qrImage.src = qrcode;
+        } else {
+            qrcode = generateQr(data.url || 'https://streamlytv.com');
         }
+        if (qrcode && dom.qrImage.getAttribute('src') !== qrcode) dom.qrImage.src = qrcode;
 
         dom.primaryBtn.disabled = false;
         dom.primaryBtn.innerHTML = screen.primaryHtml;
@@ -298,6 +303,20 @@ const SubscriptionScreen = (function () {
         li.appendChild(icon);
         li.appendChild(document.createTextNode(text));
         return li;
+    }
+
+    // QR image (data URL) for `text`, via ../js/qrcode-generator.js
+    function generateQr(text) {
+        if (typeof qrcode !== 'function') return null;
+        try {
+            const qr = qrcode(0, 'M'); // auto size, medium error correction
+            qr.addData(text);
+            qr.make();
+            return qr.createDataURL(10, 2);
+        } catch (e) {
+            console.warn('Subscription: could not generate QR', e);
+            return null;
+        }
     }
 
     function websiteHost(url) {

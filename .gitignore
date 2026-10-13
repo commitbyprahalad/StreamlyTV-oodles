@@ -1,3 +1,9 @@
+# Only the StreamlyTV app is tracked in this repo. Everything else at the
+# root (backup/, epg-react/ source, streamlyTV-tizen-react/, ...) is ignored.
+/*
+!/.gitignore
+!/StreamlyTV/
+
 # Environment files
 .env
 .env.*

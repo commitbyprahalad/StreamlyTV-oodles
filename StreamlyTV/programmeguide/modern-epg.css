@@ -107,7 +107,12 @@ body {
     font-weight: bold;
     border-radius: 5px;
     cursor: pointer;
-    transition: transform var(--focus-duration), box-shadow var(--focus-duration);
+    /* No transform transition: animating transform makes the browser promote
+       the whole EPG grid + channel column to extra GPU layers for the length of
+       the animation (it assumes the button may overlap them), which delayed
+       every focus move into / out of the header on TVs. The focus scale is
+       applied instantly instead; colour / shadow still fade. */
+    transition: box-shadow var(--focus-duration);
 }
 
 /* White ring (the button itself is yellow/red) drawn outside, no size change */
@@ -142,7 +147,8 @@ body {
     padding: 10px;
     border-radius: 5px;
     cursor: pointer;
-    transition: transform var(--focus-duration), border-color var(--focus-duration), background-color var(--focus-duration);
+    /* Same as .live-button: no transform transition (see note there) */
+    transition: border-color var(--focus-duration), background-color var(--focus-duration);
 }
 
 .icon-button img {
@@ -657,7 +663,8 @@ body {
     align-items: center;
     align-self: flex-start;
     margin-bottom: 30px;
-    transition: transform var(--focus-duration), box-shadow var(--focus-duration);
+    /* Same as .live-button: no transform transition (see note there) */
+    transition: box-shadow var(--focus-duration);
 }
 
 .play-button>*+* {

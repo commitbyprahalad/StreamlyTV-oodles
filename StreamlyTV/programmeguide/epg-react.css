@@ -1,0 +1,81 @@
+/*
+ * EPG (React) layout overrides — loaded after modern-epg.css, which still
+ * provides every colour, font and size. Only the scrolling mechanics change:
+ * the old guide scrolled two huge containers (scrollTop / scrollLeft); here
+ * the containers clip and small "tracks" are moved with a GPU transform,
+ * holding only the rows / programmes on screen.
+ */
+
+#epg-root {
+    width: 100%;
+    height: 100%;
+}
+
+/* Channel column: day indicator on top, clipped track of channels below */
+.channel-sidebar {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Same height as the time header, so channel rows line up with programme rows */
+.channel-sidebar .day-indicator {
+    position: relative;
+    height: 50px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.rx-viewport {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+}
+
+.rx-track {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.rx-viewport .rx-track {
+    width: 100%;
+}
+
+.channel-sidebar .channel-item {
+    position: absolute;
+    left: 0;
+    width: 100%;
+}
+
+/* Time header: clipped, slots positioned on a translated track */
+.time-header {
+    position: relative;
+    height: 50px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.rx-time-track {
+    height: 100%;
+}
+
+.rx-time-track .time-slot {
+    position: absolute;
+    top: 0;
+    height: 100%;
+}
+
+/* Programme grid: clipped viewport, rows positioned on a translated track */
+.program-grid {
+    overflow: hidden;
+}
+
+.program-grid .program-row {
+    position: absolute;
+    left: 0;
+    width: 28800px;
+}
