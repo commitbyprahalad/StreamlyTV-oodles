@@ -340,6 +340,18 @@ const PopupManager = (function () {
         return _state.isOpen;
     }
 
+    // Close the popup only if it is still the given type (e.g. the
+    // no-internet popup once the connection is back), without running its
+    // button callback.
+    function dismiss(type) {
+        if (!_state.isOpen || _state.activeType !== type) return;
+        const restore = _state.restoreFocusEl;
+        hideInternal();
+        if (restore && typeof restore.focus === 'function') {
+            try { restore.focus(); } catch (e) { }
+        }
+    }
+
     return {
         show: show,
         handleKey: handleKey,
@@ -349,6 +361,7 @@ const PopupManager = (function () {
         exit: exit,
         logout: logout,
         session: session,
-        noInternet: noInternet
+        noInternet: noInternet,
+        dismiss: dismiss
     };
 })();

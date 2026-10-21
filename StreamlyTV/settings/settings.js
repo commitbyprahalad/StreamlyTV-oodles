@@ -2708,15 +2708,22 @@ const Settings = (function () {
 
   // Number of cards per row in the device grid, measured from the
   // rendered layout (cards sharing the first card's top offset).
+  // Measured once per card list: reading offsetTop on every key press
+  // forced a full style + layout pass right after the focus change.
   function getDeviceGridColumns() {
     const cards = state.contentFocusables;
     if (!cards.length) return 1;
+    if (state.deviceGridCols && state.deviceGridColsFor === cards) {
+      return state.deviceGridCols;
+    }
     const firstTop = cards[0].offsetTop;
     let cols = 0;
     while (cols < cards.length && cards[cols].offsetTop === firstTop) {
       cols++;
     }
-    return cols || 1;
+    state.deviceGridCols = cols || 1;
+    state.deviceGridColsFor = cards;
+    return state.deviceGridCols;
   }
 
   function isDeviceGrid() {
@@ -2746,11 +2753,30 @@ const Settings = (function () {
     if (!isSilentStop) {
       el.classList.add("focused");
     }
-    el.focus();
     state.contentFocusIndex = index;
+
+    // Device cards: keys are handled on document, so native focus() is
+    // not needed — on TVs it adds its own scroll + focus-ring work per
+    // key. Scroll is instant (a smooth scroll animates for several
+    // frames and the next key press waits behind it).
+    if (el.classList.contains("device-card")) {
+      scrollContentToItemInstant(el);
+      return;
+    }
+    el.focus();
 
     // Scroll into view
     scrollContentToItem(el);
+  }
+
+  // Centre el in the page container only when it's (partly) off screen.
+  function scrollContentToItemInstant(el) {
+    const box = dom.pageContainer;
+    if (!box) return;
+    const boxRect = box.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    if (elRect.top >= boxRect.top && elRect.bottom <= boxRect.bottom) return;
+    box.scrollTop += (elRect.top - boxRect.top) - (boxRect.height - elRect.height) / 2;
   }
 
   function scrollContentToItem(el) {

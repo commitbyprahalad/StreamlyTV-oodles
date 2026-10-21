@@ -270,6 +270,8 @@ function login() {
         return;
     }
 
+    // Wait (max 3s) for the device zipcode lookup if it's still running
+    if (!deviceInfoReady(login)) return;
     const device = buildDevicePayload();
 
     const formData = new FormData();
@@ -337,6 +339,7 @@ function loginWithPasscode() {
         return;
     }
 
+    if (!deviceInfoReady(loginWithPasscode)) return;
     const device = buildDevicePayload();
 
     const formData = new FormData();
@@ -584,6 +587,7 @@ function checkQRScan() {
 }
 
 function completeQRLogin() {
+    if (!deviceInfoReady(completeQRLogin)) return;
     const device = buildDevicePayload();
 
     // Show "Logging in..." state in QR area
@@ -1274,9 +1278,9 @@ function handleKeyDown(e) {
 function init() {
     "use strict";
 
-    // Kick off zipcode detection early
-    if (typeof GeoLocation !== 'undefined' && GeoLocation.getZipCode) {
-        GeoLocation.getZipCode(function () { });
+    // Look up the device's zipcode now, so it's ready when a login is sent
+    if (typeof GeoLocation !== 'undefined') {
+        GeoLocation.lookupDeviceZip();
     }
 
     // Keypad safety net: make sure every input starts readonly (so focusing

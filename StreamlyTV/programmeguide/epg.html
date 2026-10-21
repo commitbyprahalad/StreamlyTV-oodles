@@ -44,7 +44,10 @@
 
     <div id="player-error" class="player-error hidden">
       <p>Technical issue. Please try again later.</p>
-      <button id="player-retry">Retry</button>
+      <div class="player-error-buttons">
+        <button id="player-retry" class="pm-btn pm-focused">Retry</button>
+        <button id="player-error-back" class="pm-btn">Back</button>
+      </div>
     </div>
 
     <!-- Now Playing Info Overlay (UP key) -->
@@ -59,9 +62,7 @@
       </div>
     </div>
     <!-- Channel List Overlay (LEFT / RIGHT / CH+ CH- keys while player is active) -->
-    <div id="player-channel-list" class="player-ch-list hidden">
-      <div class="pch-track" id="pch-track"></div>
-    </div>
+    <div id="player-channel-list" class="player-ch-list hidden"><!-- rendered by src/ChannelStrip.jsx --></div>
   </div>
 
   <!-- Samsung TV web APIs (AVPlay) -->
@@ -79,7 +80,7 @@
   <script src="modern-epg-player.js"></script>
   <!-- dash.js (fallback player) is loaded on demand by modern-epg-player.js -->
   <script id="vite-legacy-polyfill" src="./epg-app/polyfills-legacy-MXKDOyQ8.js"></script>
-  <script id="vite-legacy-entry" data-src="./epg-app/index-legacy-BcsivlCv.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
+  <script id="vite-legacy-entry" data-src="./epg-app/index-legacy-RFx0jq17.js">System.import(document.getElementById('vite-legacy-entry').getAttribute('data-src'))</script>
 </body>
 
 </html>

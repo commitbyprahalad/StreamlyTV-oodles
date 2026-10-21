@@ -71,7 +71,8 @@ const API = {
 const REMEMBER_ME_KEYS = ["remember_me", "remember_me_email", "remember_me_password"];
 // Unsent crash reports must also survive logout: they're uploaded on the
 // next login (see js/crash-logger.js).
-const PERSISTENT_KEYS = REMEMBER_ME_KEYS.concat(["crash_reports"]);
+// The device's own id and location belong to the TV, not the account.
+const PERSISTENT_KEYS = REMEMBER_ME_KEYS.concat(["crash_reports", "device_uuid", "device_zipcode", "device_zipcode_at"]);
 
 // Use instead of localStorage.clear() when logging the user out.
 function clearSessionStorage() {

@@ -862,6 +862,11 @@ body {
     display: none !important;
 }
 
+/* Rebuffer while a channel is playing: loader only, picture not dimmed */
+.player-spinner.rebuffer {
+    background-color: transparent !important;
+}
+
 .player-error {
     position: fixed !important;
     top: 50% !important;
@@ -881,19 +886,19 @@ body {
     display: none !important;
 }
 
+/* Same look as the app's other popups (PopupManager .pm-btn buttons) */
 .player-error p {
-    font-size: 20px;
-    margin-bottom: 20px;
+    font-size: 28px;
+    margin: 0 0 32px;
 }
 
-.player-error button {
-    background: var(--color-primary);
-    color: var(--color-on-primary);
-    border: none;
-    padding: 12px 30px;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
+.player-error-buttons {
+    display: flex;
+    justify-content: center;
+}
+
+.player-error-buttons>*+* {
+    margin-left: 40px;
 }
 
 .player-controls {
@@ -1047,7 +1052,8 @@ body {
     padding: 40px 50px 30px !important;
     z-index: 10010 !important;
     box-sizing: border-box !important;
-    animation: pch-slide-up 0.22s ease-out !important;
+    /* Short slide, no fade-in: the cards are on screen from the first frame */
+    animation: pch-slide-up 0.15s ease-out !important;
     /* Outer clip container — this does the cropping */
     overflow: hidden !important;
 }
@@ -1059,27 +1065,22 @@ body {
 @keyframes pch-slide-up {
     from {
         transform: translateY(40px);
-        opacity: 0;
     }
 
     to {
         transform: translateY(0);
-        opacity: 1;
     }
 }
 
-/* Scrolling track — must NOT have overflow:hidden so all cards exist in layout */
+/* Scrolling track (programmeguide ChannelStrip.jsx). Only the cards around
+   the focused channel exist, each placed at index x 174px, so the track
+   stays one screen wide whatever the channel count. */
 .pch-track {
-    display: flex !important;
-    align-items: flex-end !important;
+    position: relative !important;
+    height: 220px !important;
     overflow: visible !important;
-    white-space: nowrap !important;
-    transition: transform 0.25s ease !important;
+    transition: transform 0.18s ease-out !important;
     will-change: transform !important;
-}
-
-.pch-track>*+* {
-    margin-left: 14px !important;
 }
 
 /* Each channel card */
@@ -1094,9 +1095,11 @@ body {
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    position: relative !important;
+    position: absolute !important;
+    top: 0 !important;
     cursor: pointer !important;
-    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    /* transform only: an animated glow repaints both cards every frame on TVs */
+    transition: transform 0.12s ease-out !important;
 }
 
 .pch-card:hover {
@@ -1134,17 +1137,15 @@ body {
    ======================================== */
 
 .av-player {
-    display: none;
+    /* Always laid out (the closed player modal hides it): the AVPlay surface
+       exists before av.open() instead of appearing in the same tick */
+    display: block;
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
     z-index: 10001;
-}
-
-html.avplay-mode .av-player {
-    display: block;
 }
 
 html.avplay-mode,

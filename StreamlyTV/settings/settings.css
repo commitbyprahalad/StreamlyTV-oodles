@@ -536,6 +536,10 @@ body {
 
 .device-card .device-monitor img {
   object-fit: contain;
+  /* API device images can be large: keep them at icon size so moving
+     focus never re-scales a big bitmap */
+  max-width: 100%;
+  max-height: 120px;
 }
 
 .device-card .device-ip {
@@ -1117,6 +1121,14 @@ body {
 .content-focusable {
   outline: none;
   transition: all 0.15s;
+}
+
+/* Connected Devices: focus lands in one frame. An animated border + glow
+   (transition: all) repainted both cards for ~10 frames per key press,
+   which is the focus delay seen on TVs. */
+.device-grid .device-card,
+.device-grid .logout-btn-device {
+  transition: none;
 }
 
 .subscription-section.focused .subscription-btn {

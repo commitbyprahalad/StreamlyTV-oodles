@@ -128,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // routing on. Saving only the token here left personaldeviceid empty, so
     // the device-name screen stopped with "Device ID missing".
     function relogin() {
+        if (!deviceInfoReady(relogin)) return;
         const device = buildDevicePayload();
         const formData = new FormData();
         let url = API.LOGIN;

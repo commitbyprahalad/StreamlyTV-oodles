@@ -24,10 +24,25 @@ EPG.player = {
     AVPLAY_ENABLED: true,
     AVPLAY_START_TIMEOUT: 12000,
     AVPLAY_UNAVAILABLE_KEY: 'avplay_unavailable', // sessionStorage
+    // First segments at the lowest bitrate: the picture appears much sooner
+    // after a channel change and adaptive streaming then steps the quality
+    // up. '' = player default.
+    AVPLAY_START_BITRATE: 'LOWEST',
+    DASH_START_TIMEOUT: 20000,
+    STALL_TIMEOUT: 30000,          // buffering this long while playing -> error popup
+    REBUFFER_SPINNER_DELAY: 1000,  // short rebuffers while playing show no loader
+    CHANNEL_SWITCH_DELAY: 300,     // rapid CH+/CH- presses open only the last channel
 
     engine: null,             // 'avplay' | 'dash' — engine of the current stream
     avObject: null,           // <object type="application/avplayer">
     _loadToken: 0,            // bumped per stream so late callbacks are ignored
+    _playing: false,          // current stream has started (frames / time advancing)
+    _spinnerClass: null,      // last class set on the spinner (skip identical DOM writes)
+    _spinnerDelay: null,
+    _avplayFellBack: false,   // current stream fell back from AVPlay to dash.js
+    _errorFocus: 0,           // error popup: 0 = Retry, 1 = Back
+    _switchTimer: null,
+    _lastSwitchAt: 0,
     dashPlayer: null,
     videoElement: null,
     modal: null,
@@ -45,8 +60,7 @@ EPG.player = {
         visible: false,
         focusedIndex: 0,       // index in EPG.state.channels[]
         activeIndex: 0,        // currently playing channel index
-        autoHideTimer: null,
-        cachedChannelCount: -1 // -1 = cache invalid, triggers full rebuild
+        autoHideTimer: null
     },
 
     // Initialize player
@@ -64,7 +78,15 @@ EPG.player = {
 
         this.dashPlayer = null;
         this.setupEventListeners();
+        this.setupVideoEvents();
         this.setupAppLifecycle();
+
+        // No AVPlay on this device / session: fetch dash.js once the guide
+        // has rendered, so the first channel doesn't wait for it.
+        if (!this.canUseAVPlay()) {
+            const self = this;
+            setTimeout(function () { self._ensureDashScript(); }, 5000);
+        }
 
         // ✅ Bridge for legacy auto-play script that uses window.PlayerModule
         window.PlayerModule = {
@@ -88,18 +110,72 @@ EPG.player = {
 
         const retryBtn = document.getElementById('player-retry');
         if (retryBtn) {
-            if (retryBtn.addEventListener) {
-                retryBtn.addEventListener('click', function () {
-                    self.retry();
-                });
-            } else if (retryBtn.attachEvent) {
-                retryBtn.attachEvent('onclick', function () {
-                    self.retry();
-                });
+            retryBtn.addEventListener('click', function () {
+                self.retry();
+            });
+        }
+        const backBtn = document.getElementById('player-error-back');
+        if (backBtn) {
+            backBtn.addEventListener('click', function () {
+                self.close();
+            });
+        }
+    },
+
+    // dash.js engine: the loader follows the <video> element itself —
+    // hidden as soon as time advances, shown again only for a real stall.
+    // (dash.js BUFFER_EMPTY / BUFFER_LOADED fire per audio/video track and
+    // could leave the loader on top of a playing picture.)
+    setupVideoEvents: function () {
+        const v = this.videoElement;
+        if (!v) return;
+        const self = this;
+        function progressing() {
+            if (self.engine === 'dash' && self.isActive && !v.paused) self._markPlaying();
+        }
+        v.addEventListener('playing', progressing);
+        v.addEventListener('timeupdate', progressing);
+        v.addEventListener('waiting', function () {
+            if (self.engine === 'dash' && self.isActive && self._playing) self._onStall();
+        });
+    },
+
+    // The stream is playing: no loader, no start / stall timers.
+    _markPlaying: function () {
+        clearTimeout(this.bufferingTimeout);
+        if (!this._playing) {
+            this._playing = true;
+            console.log('[PLAYER] playing (' + this.engine + ')');
+            if (this.engine === 'dash') {
+                this.unmute();
+                // AVPlay failed on a stream dash.js can play: AVPlay is the
+                // problem on this TV, so skip it for the rest of the session.
+                // (If dash.js fails too, the stream was the problem and the
+                // next channel tries AVPlay again.)
+                if (this._avplayFellBack) {
+                    try { sessionStorage.setItem(this.AVPLAY_UNAVAILABLE_KEY, '1'); } catch (e) { /* not persisted */ }
+                }
             }
         }
+        this.hideSpinner();
+    },
 
-        // console.log('✅ Player event listeners attached');
+    // Buffering after the stream had started. A short rebuffer shows no
+    // loader; after REBUFFER_SPINNER_DELAY a small loader (no dark overlay)
+    // appears; after STALL_TIMEOUT the error popup.
+    _onStall: function () {
+        const self = this;
+        const token = this._loadToken;
+        clearTimeout(this._spinnerDelay);
+        this._spinnerDelay = setTimeout(function () {
+            if (self.isActive && token === self._loadToken) self.showSpinner(true);
+        }, this.REBUFFER_SPINNER_DELAY);
+        clearTimeout(this.bufferingTimeout);
+        this.bufferingTimeout = setTimeout(function () {
+            if (!self.isActive || token !== self._loadToken) return;
+            self.reportError('BufferingTimeout', 'Stalled buffering for ' + (self.STALL_TIMEOUT / 1000) + 's while playing');
+            self.showError();
+        }, this.STALL_TIMEOUT);
     },
 
     // AVPlay must be suspended when the app goes to the background (Home,
@@ -178,32 +254,43 @@ EPG.player = {
         if (freshDrmData) localStorage.setItem('drmData', freshDrmData);
         if (freshWidevineLicense) localStorage.setItem('widevinelicense', freshWidevineLicense);
 
-        // Pre-build channel list overlay HTML immediately so it's ready
-        // when user presses LEFT/RIGHT. Must run BEFORE destroyPlayer() and
-        // dash.js initialization to avoid the main thread being blocked.
-        this.preBuildChannelList();
+        // The channel list (React, ChannelStrip.jsx) keeps the cards around
+        // the playing channel rendered, so LEFT/RIGHT opens it at once.
+        this._stripFocus();
 
         // Show modal
         if (this.modal) {
             this.modal.className = 'player-modal'; // removes 'hidden'
         }
 
+        clearTimeout(this._switchTimer);
         this.isActive = true;
-        this.showSpinner();
-        this.hideError();
-        this.hideControls();
-
-        // Destroy any existing player instance cleanly
-        this.destroyPlayer();
 
         // Start periodic session + inactivity monitoring
         this._startSessionCheck();
 
-        // Short yield so the modal/spinner can paint before dash.js setup
+        this._startStream(streamUrl, freshDrmData, freshWidevineLicense);
+    },
+
+    // Stop whatever is playing and start streamUrl, with the loader shown
+    // until the first frame. Used by open() and retry().
+    _startStream: function (streamUrl, drmData, widevineLicense) {
+        this.hideError();
+        this.hideControls();
+        this.destroyPlayer(true);
+        this._playing = false;
+        this._avplayFellBack = false;
+        this.showSpinner();
+
+        // One frame for the loader to paint before the (synchronous) native
+        // player open; a newer stream started meanwhile cancels this one.
         const self = this;
+        const token = this._loadToken;
         setTimeout(function () {
-            self.loadStream(streamUrl, freshDrmData, freshWidevineLicense);
-        }, 30);
+            if (self.isActive && token === self._loadToken) {
+                self.loadStream(streamUrl, drmData, widevineLicense);
+            }
+        }, 16);
     },
 
     // Start playback immediately and run the addtorecent session check in
@@ -220,11 +307,14 @@ EPG.player = {
         }
     },
 
-    // Properly destroy previous player instance
-    destroyPlayer: function () {
+    // Properly destroy previous player instance.
+    // keepAVPlayMode: a new stream starts right away (channel change, retry):
+    // leaving avplay-mode would make the hidden guide visible again for a
+    // frame and restyle the whole page twice per channel change.
+    destroyPlayer: function (keepAVPlayMode) {
         this._loadToken++; // late AVPlay / license callbacks of the old stream are ignored
         this.stopAVPlay();
-        this.setAVPlayMode(false);
+        if (!keepAVPlayMode) this.setAVPlayMode(false);
         this.engine = null;
 
         if (this.dashPlayer) {
@@ -240,12 +330,15 @@ EPG.player = {
         }
 
         // Clear video src to release resources
-        if (this.videoElement) {
-            this.videoElement.src = '';
+        if (this.videoElement && this.videoElement.getAttribute('src')) {
+            this.videoElement.removeAttribute('src');
             try { this.videoElement.load(); } catch (e) { /* ignore */ }
         }
 
         clearTimeout(this.bufferingTimeout);
+        clearTimeout(this._spinnerDelay);
+        clearTimeout(this._dashWaitTimer);
+        this._dashWaitCount = 0;
     },
 
     // Load a stream with AVPlay, or dash.js when AVPlay isn't usable.
@@ -272,6 +365,8 @@ EPG.player = {
     // modal, the page background and the EPG (hidden, not removed, so its
     // scroll/focus state is kept for when the player closes).
     setAVPlayMode: function (on) {
+        if (this._avplayMode === on) return;
+        this._avplayMode = on;
         const root = document.documentElement;
         if (root && root.classList) root.classList.toggle('avplay-mode', on);
     },
@@ -302,19 +397,25 @@ EPG.player = {
             return !self.isActive || token !== self._loadToken;
         }
 
-        // Couldn't start with AVPlay: replay the same stream with dash.js
-        // and stay on dash.js for the rest of this app session.
+        // Couldn't start with AVPlay: replay the same stream with dash.js.
+        // AVPlay is only skipped for the rest of the session if dash.js then
+        // plays this stream (see _markPlaying) — a dead channel must not
+        // move every other channel to the slower engine.
         function fallBackToDash(reason) {
             if (stale() || fellBack) return;
             fellBack = true; // late AVPlay events after stop() must not start dash.js twice
             console.warn('[PLAYER] AVPlay could not start (' + reason + ') — falling back to dash.js');
             self.reportError('AVPlayStartFailed', 'AVPlay could not start (' + reason + '), falling back to dash.js');
-            try { sessionStorage.setItem(self.AVPLAY_UNAVAILABLE_KEY, '1'); } catch (e) { /* not persisted */ }
+            self._avplayFellBack = true;
             clearTimeout(self.bufferingTimeout);
-            self.stopAVPlay();
-            self.setAVPlayMode(false);
-            self.engine = null;
-            self.loadDashStream(streamUrl, drmData, widevineLicense);
+            // Leave the AVPlay listener callback before closing the native player
+            setTimeout(function () {
+                if (stale()) return;
+                self.stopAVPlay();
+                self.setAVPlayMode(false);
+                self.engine = null;
+                self.loadDashStream(streamUrl, drmData, widevineLicense);
+            }, 0);
         }
 
         // Before the first frame, any failure falls back to dash.js; once the
@@ -332,22 +433,23 @@ EPG.player = {
 
         try {
             av.open(streamUrl);
-            av.setDisplayRect(0, 0, window.innerWidth || 1920, window.innerHeight || 1080);
+            // AVPlay coordinates are always on a 1920x1080 base, whatever
+            // the page's own resolution is.
+            av.setDisplayRect(0, 0, 1920, 1080);
             av.setListener({
                 onbufferingstart: function () {
                     if (stale() || !started) return;
-                    self.showSpinner();
-                    clearTimeout(self.bufferingTimeout);
-                    self.bufferingTimeout = setTimeout(function () {
-                        if (stale()) return;
-                        self.reportError('BufferingTimeout', 'Stalled buffering for 30s while playing');
-                        self.showError();
-                    }, 30000);
+                    self._onStall();
                 },
                 onbufferingcomplete: function () {
                     if (stale() || !started) return;
-                    clearTimeout(self.bufferingTimeout);
-                    self.hideSpinner();
+                    self._markPlaying();
+                },
+                // Fires while the picture advances: the loader can never stay
+                // on top of a playing channel.
+                oncurrentplaytime: function () {
+                    if (stale() || !started) return;
+                    self._markPlaying();
                 },
                 onstreamcompleted: function () {
                     fail('stream completed');
@@ -376,27 +478,40 @@ EPG.player = {
             return;
         }
 
+        if (this.AVPLAY_START_BITRATE) {
+            try {
+                av.setStreamingProperty('ADAPTIVE_INFO', 'STARTBITRATE=' + this.AVPLAY_START_BITRATE);
+            } catch (e) { /* not supported on this firmware: default start */ }
+        }
+
         clearTimeout(this.bufferingTimeout);
         this.bufferingTimeout = setTimeout(function () {
             fail('no start within ' + self.AVPLAY_START_TIMEOUT + 'ms');
         }, this.AVPLAY_START_TIMEOUT);
 
-        av.prepareAsync(function () {
-            if (stale()) return;
-            try {
-                av.play();
-            } catch (e) {
-                fail('play: ' + (e && (e.name || e.message)));
-                return;
-            }
-            started = true;
-            clearTimeout(self.bufferingTimeout);
-            self.hideSpinner();
-            self.hideError();
-            console.log('[PLAYER] AVPlay playing');
-        }, function (err) {
-            fail('prepare: ' + (err && (err.name || err.message)));
-        });
+        // Slow start: fetch dash.js now so a fallback doesn't also have to
+        // wait for the 700KB script.
+        setTimeout(function () {
+            if (!stale() && !started) self._ensureDashScript();
+        }, 4000);
+
+        try {
+            av.prepareAsync(function () {
+                if (stale()) return;
+                try {
+                    av.play();
+                } catch (e) {
+                    fail('play: ' + (e && (e.name || e.message)));
+                    return;
+                }
+                started = true;
+                self._markPlaying();
+            }, function (err) {
+                fail('prepare: ' + (err && (err.name || err.message)));
+            });
+        } catch (e) {
+            fail('prepareAsync: ' + (e && (e.name || e.message)));
+        }
     },
 
     // Widevine with AVPlay: the player hands us the licence challenge and we
@@ -468,13 +583,14 @@ EPG.player = {
     // Create a fresh dash.js instance and load the stream
     loadDashStream: function (streamUrl, drmData, widevineLicense) {
         console.log('[PLAYER] loadDashStream() — starting');
+        this.setAVPlayMode(false);
         this.engine = 'dash';
         this._ensureDashScript();
 
         if (!this.videoElement) {
             console.error('[PLAYER] FAIL: videoElement not found');
             this.reportError('DashLoadError', 'videoElement not found');
-            //this.showError();
+            this.showError();
             return;
         }
         console.log('[PLAYER]   videoElement OK');
@@ -483,11 +599,12 @@ EPG.player = {
             // dash.js loads async; if play is pressed before it has
             // finished, wait for it (up to ~5s) instead of failing.
             this._dashWaitCount = (this._dashWaitCount || 0) + 1;
-            if (this._dashWaitCount <= 25) {
+            if (this._dashWaitCount <= 50) {
                 const self = this;
+                const token = this._loadToken;
                 clearTimeout(this._dashWaitTimer);
                 this._dashWaitTimer = setTimeout(function () {
-                    if (self.isActive && self.engine === 'dash' && localStorage.getItem('channelUrl') === streamUrl) {
+                    if (self.isActive && self.engine === 'dash' && token === self._loadToken) {
                         self.loadDashStream(streamUrl, drmData, widevineLicense);
                     }
                 }, 200);
@@ -495,8 +612,8 @@ EPG.player = {
             }
             this._dashWaitCount = 0;
             console.error('[PLAYER] FAIL: dash.js not loaded');
-            this.reportError('DashLoadError', 'dash.js library not loaded after 5s');
-            //this.showError();
+            this.reportError('DashLoadError', 'dash.js library not loaded after 10s');
+            this.showError();
             return;
         }
         this._dashWaitCount = 0;
@@ -509,7 +626,7 @@ EPG.player = {
         } catch (e) {
             console.error('[PLAYER] FAIL: create dash.js player:', e);
             this.reportError('DashLoadError', 'Could not create dash.js player', e);
-            //this.showError();
+            this.showError();
             return;
         }
 
@@ -540,13 +657,16 @@ EPG.player = {
             console.log('[PLAYER]   No DRM data - no protection');
         }
 
-        // Set buffering timeout before initialize
+        // Start timeout: cleared as soon as the picture moves (_markPlaying)
         const self = this;
+        const token = this._loadToken;
+        clearTimeout(this.bufferingTimeout);
         this.bufferingTimeout = setTimeout(function () {
-            console.log('[PLAYER]   Buffering timeout (30s) - showing error');
-            self.reportError('BufferingTimeout', 'dash.js stream did not start within 30s');
+            if (!self.isActive || token !== self._loadToken) return;
+            console.log('[PLAYER]   dash.js start timeout - showing error');
+            self.reportError('BufferingTimeout', 'dash.js stream did not start within ' + (self.DASH_START_TIMEOUT / 1000) + 's');
             self.showError();
-        }, 30000);
+        }, this.DASH_START_TIMEOUT);
 
         // Initialize player - this starts playback
         try {
@@ -558,6 +678,7 @@ EPG.player = {
 
             // Explicitly call play() after initialize to handle autoplay policy
             setTimeout(function () {
+                if (token !== self._loadToken || !self.dashPlayer || self._playing) return;
                 try {
                     console.log('[PLAYER]   Calling dashPlayer.play()...');
                     self.dashPlayer.play();
@@ -591,48 +712,14 @@ EPG.player = {
         const self = this;
         const events = dashjs.MediaPlayer.events;
 
-        // Wrap each event listener in try-catch to prevent crashes
-        try {
-            if (events.BUFFER_EMPTY) {
-                this.dashPlayer.on(events.BUFFER_EMPTY, function () {
-                    if (!self.isActive) return;
-                    //console.log('Buffering...');
-                    self.showSpinner();
-
-                    clearTimeout(self.bufferingTimeout);
-                    self.bufferingTimeout = setTimeout(function () {
-                        //console.error('Buffer empty timeout');
-                        self.reportError('BufferingTimeout', 'dash.js buffer empty for 30s');
-                        self.showError();
-                    }, 30000);
-                });
-            }
-        } catch (e) {
-            console.warn('BUFFER_EMPTY event failed:', e);
-        }
-
-        try {
-            if (events.BUFFER_LOADED) {
-                this.dashPlayer.on(events.BUFFER_LOADED, function () {
-                    if (!self.isActive) return;
-                    console.log('[PLAYER] EVENT: BUFFER_LOADED');
-                    self.hideSpinner();
-                    clearTimeout(self.bufferingTimeout);
-                });
-            }
-        } catch (e) {
-            console.warn('[PLAYER] BUFFER_LOADED event failed:', e);
-        }
-
+        // Loader / stall handling is on the <video> element (setupVideoEvents)
         try {
             if (events.PLAYBACK_STARTED) {
                 this.dashPlayer.on(events.PLAYBACK_STARTED, function () {
                     if (!self.isActive) return;
+                    // Fired on the <video> 'play' event, before any frame is
+                    // decoded: the loader stays until 'playing' / 'timeupdate'.
                     console.log('[PLAYER] EVENT: PLAYBACK_STARTED');
-                    self.unmute();
-                    self.hideSpinner();
-                    self.hideError();
-                    clearTimeout(self.bufferingTimeout);
                 });
             }
         } catch (e) {
@@ -681,7 +768,9 @@ EPG.player = {
     close: function () {
         console.log('[PLAYER] close()');
 
+        clearTimeout(this._switchTimer);
         this.destroyPlayer();
+        this._playing = false;
         this.hideSpinner();
         this.hideError();
         this.hideControls();
@@ -715,6 +804,10 @@ EPG.player = {
     // Called automatically from open() when a stream starts.
     _startSessionCheck: function () {
         const self = this;
+
+        // open() runs on every channel change: replace the running timers
+        // instead of stacking another heartbeat + keydown listener each time.
+        this._stopSessionCheck();
 
         // Mark initial activity time
         this._lastActivity = Date.now();
@@ -835,37 +928,33 @@ EPG.player = {
         }
     },
 
-    // Retry after error
+    // Retry after error: same stream, loader shown until the first frame
     retry: function () {
-        //console.log('Retrying...');
-
-        this.hideError();
-        this.destroyPlayer();
-
         const streamUrl = localStorage.getItem('channelUrl');
-        const drmData = localStorage.getItem('drmData');
-        const widevineLicense = localStorage.getItem('widevinelicense');
-
         if (!streamUrl) {
-            //console.error('No stream URL saved for retry');
-            this.showError();
+            this.close();
             return;
         }
-
-        const self = this;
-        setTimeout(function () {
-            self.loadStream(streamUrl, drmData, widevineLicense);
-        }, 200);
+        this._startStream(streamUrl, localStorage.getItem('drmData'), localStorage.getItem('widevinelicense'));
     },
 
     // ── UI Helpers ─────────────────────────────────────────────────────────
 
-    showSpinner: function () {
-        if (this.spinner) this.spinner.className = 'player-spinner'; // removes 'hidden'
+    // rebuffer: small loader without the dark overlay (stream already playing)
+    showSpinner: function (rebuffer) {
+        this._setSpinner(rebuffer ? 'player-spinner rebuffer' : 'player-spinner');
     },
 
     hideSpinner: function () {
-        if (this.spinner) this.spinner.className = 'player-spinner hidden';
+        clearTimeout(this._spinnerDelay);
+        this._setSpinner('player-spinner hidden');
+    },
+
+    // Called several times a second while playing: only touch the DOM on a change
+    _setSpinner: function (cls) {
+        if (!this.spinner || this._spinnerClass === cls) return;
+        this._spinnerClass = cls;
+        this.spinner.className = cls;
     },
 
     // Queue a player failure for the crash report API (CrashLogger).
@@ -881,15 +970,76 @@ EPG.player = {
         });
     },
 
+    // "Technical issue" popup. The failed stream is stopped: no late player
+    // event can bring the loader back over the popup, and on TVs a <video>
+    // plane would draw above it. Retry is focused; LEFT/RIGHT move between
+    // Retry and Back (handleErrorKey).
     showError: function () {
+        if (!this.isActive) return;
         console.log('[PLAYER] showError');
         clearTimeout(this.bufferingTimeout);
+        clearTimeout(this._switchTimer);
         this.hideSpinner();
+        this.hideControls();
+        this.hideNowPlaying();
+        this.hideChannelList();
+
+        // Often called from inside an AVPlay listener: close the native
+        // player on the next tick, unless a retry started a new stream.
+        const self = this;
+        const token = ++this._loadToken;
+        setTimeout(function () {
+            if (token === self._loadToken) self.destroyPlayer();
+        }, 0);
+
         if (this.error) this.error.className = 'player-error'; // removes 'hidden'
+        this._setErrorFocus(0);
     },
 
     hideError: function () {
-        if (this.error) this.error.className = 'player-error hidden';
+        if (this.error && this.error.className !== 'player-error hidden') {
+            this.error.className = 'player-error hidden';
+        }
+    },
+
+    isErrorVisible: function () {
+        return !!this.error && this.error.className.indexOf('hidden') === -1;
+    },
+
+    _setErrorFocus: function (index) {
+        this._errorFocus = index;
+        const retryBtn = document.getElementById('player-retry');
+        const backBtn = document.getElementById('player-error-back');
+        if (retryBtn) retryBtn.className = 'pm-btn' + (index === 0 ? ' pm-focused' : '');
+        if (backBtn) backBtn.className = 'pm-btn' + (index === 1 ? ' pm-focused' : '');
+    },
+
+    // Remote keys while the error popup is open. Returns true when handled.
+    handleErrorKey: function (keyCode) {
+        switch (keyCode) {
+            case 37: // LEFT
+            case 39: // RIGHT
+                this._setErrorFocus(this._errorFocus === 0 ? 1 : 0);
+                return true;
+            case 13: // ENTER
+                if (this._errorFocus === 0) this.retry();
+                else this.close();
+                return true;
+            case 10009: // RETURN
+                this.close();
+                return true;
+            case 427: // CH+
+                this.chStep('up');
+                return true;
+            case 428: // CH-
+                this.chStep('down');
+                return true;
+            case 38: // UP
+            case 40: // DOWN
+                return true; // focus stays on the popup
+            default:
+                return false;
+        }
     },
 
     showControls: function (iconType) {
@@ -983,80 +1133,32 @@ EPG.player = {
 
     // ── Channel List Overlay ───────────────────────────────────────────────
 
-    // Pre-build channel list HTML once when channels are loaded.
-    // Called from EPG.ui.renderEPG() so it is instantly ready when user presses Left/Right.
-    preBuildChannelList: function () {
-        const track = document.getElementById('pch-track');
-        if (!track) return;
-
-        const channels = EPG.state ? EPG.state.channels : [];
-        if (!channels || channels.length === 0) return;
-
-        // Skip rebuild if channel count hasn't changed
-        const built = this.chList.cachedChannelCount || 0;
-        if (built === channels.length) return;
-
-        // Later EPG pages only add channels at the end: append just those
-        // cards so a visible strip keeps its state.
-        const from = (built > 0 && built < channels.length &&
-            track.getElementsByClassName('pch-card').length === built) ? built : 0;
-
-        let html = '';
-        for (let i = from; i < channels.length; i++) {
-            const ch = channels[i];
-            const logoSrc = ch.image || '../images/streamly/no-logo.png';
-            html += '<div class="pch-card" data-ch-index="' + i + '" data-ch-url="' + (ch.url || '') + '">' +
-                '<span class="pch-num">' + (ch.id || '') + '</span>' +
-                '<img class="pch-logo" src="' + logoSrc + '" alt="' + (ch.callSign || '') + '">' +
-                '</div>';
-        }
-
-        if (from === 0) {
-            track.innerHTML = html;
-        } else {
-            track.insertAdjacentHTML('beforeend', html);
-        }
-        this.chList.cachedChannelCount = channels.length;
-        console.log('[PLAYER] Channel list pre-built with', channels.length, 'channels');
+    // Channel list cards are rendered by the guide's React bundle
+    // (ChannelStrip.jsx): only the cards around focusedIndex exist.
+    _stripFocus: function () {
+        if (EPG.channelStrip) EPG.channelStrip.setFocus(this.chList.focusedIndex);
     },
 
     showChannelList: function () {
         const el = document.getElementById('player-channel-list');
         if (!el) return;
 
-        const track = document.getElementById('pch-track');
-        if (!track) return;
-
-        // Update focused class on the cards (pre-built HTML already exists)
-        const cards = track.getElementsByClassName('pch-card');
-        for (let i = 0; i < cards.length; i++) {
-            const cls = cards[i].className;
-            if (i === this.chList.focusedIndex) {
-                if (cls.indexOf('pch-focused') === -1) {
-                    cards[i].className = cls + ' pch-focused';
-                }
-            } else {
-                if (cls.indexOf('pch-focused') !== -1) {
-                    cards[i].className = cls.replace(/\s?pch-focused/g, '');
-                }
-            }
+        this._stripFocus();
+        if (!this.chList.visible) {
+            el.className = 'player-ch-list';
+            this.chList.visible = true;
         }
-
-        el.className = 'player-ch-list';
-        this.chList.visible = true;
-
-        // Scroll focused card into view
-        this._scrollChList();
 
         // Auto-hide after 5 seconds of inactivity
         this._resetChAutoHide();
     },
 
     hideChannelList: function () {
+        clearTimeout(this.chList.autoHideTimer);
+        if (!this.chList.visible) return;
         const el = document.getElementById('player-channel-list');
         if (el) el.className = 'player-ch-list hidden';
         this.chList.visible = false;
-        clearTimeout(this.chList.autoHideTimer);
     },
 
     // Move focus left/right in channel list
@@ -1071,7 +1173,6 @@ EPG.player = {
         }
 
         this.showChannelList();   // re-render with new focused index
-        this._resetChAutoHide();
     },
 
     // Switch to the focused channel
@@ -1090,7 +1191,10 @@ EPG.player = {
         this.openChecked(ch.url, drmData, widevineLicense);
     },
 
-    // CH+ / CH- : jump to next / previous channel immediately
+    // CH+ / CH- : next / previous channel. A single press opens the channel
+    // at once; while presses keep coming the old stream is stopped and only
+    // the channel the viewer lands on is opened, instead of opening and
+    // closing the native player for every channel passed.
     chStep: function (direction) {
         const channels = EPG.state ? EPG.state.channels : [];
         if (!channels || channels.length === 0) return;
@@ -1104,44 +1208,32 @@ EPG.player = {
 
         const ch = channels[newIndex];
         if (!ch || !ch.url) return;
+        if (newIndex === this.chList.activeIndex && !this.isErrorVisible()) return; // first / last channel
 
         this.chList.activeIndex = newIndex;
         this.chList.focusedIndex = newIndex;
         this.hideChannelList();
         this.hideNowPlaying();
 
-        const drmData = localStorage.getItem('drmData');
-        const widevineLicense = localStorage.getItem('widevinelicense');
+        const self = this;
+        const now = Date.now();
+        const rapid = now - this._lastSwitchAt < this.CHANNEL_SWITCH_DELAY * 2;
+        this._lastSwitchAt = now;
+        clearTimeout(this._switchTimer);
 
-        this.openChecked(ch.url, drmData, widevineLicense);
-    },
-
-    // Scroll the track so focused card is centered
-    _scrollChList: function () {
-        const track = document.getElementById('pch-track');
-        if (!track) return;
-
-        const cards = track.getElementsByClassName('pch-card');
-        if (!cards || cards.length === 0) return;
-
-        const focusedCard = cards[this.chList.focusedIndex];
-        if (!focusedCard) return;
-
-        // Use the full screen width as the viewport width (player is fullscreen)
-        let parentW = window.innerWidth || document.documentElement.clientWidth || 1920;
-        // Subtract padding (50px each side from CSS)
-        parentW = parentW - 100;
-
-        // offsetLeft is relative to the track (flex container) — sum up card widths + gaps
-        const CARD_W = 160;   // matches .pch-card width
-        const CARD_GAP = 14;  // matches gap
-        const cardLeft = this.chList.focusedIndex * (CARD_W + CARD_GAP);
-        const cardW = focusedCard.offsetWidth || CARD_W;
-
-        let offset = cardLeft - (parentW / 2) + (cardW / 2);
-        offset = Math.max(0, offset);
-
-        track.style.transform = 'translateX(-' + offset + 'px)';
+        if (!rapid) {
+            this.openChecked(ch.url, localStorage.getItem('drmData'), localStorage.getItem('widevinelicense'));
+            return;
+        }
+        this.hideError();
+        this.destroyPlayer(true);
+        this._playing = false;
+        this._stripFocus();
+        this.showSpinner();
+        this._switchTimer = setTimeout(function () {
+            if (!self.isActive) return;
+            self.openChecked(ch.url, localStorage.getItem('drmData'), localStorage.getItem('widevinelicense'));
+        }, this.CHANNEL_SWITCH_DELAY);
     },
 
     // Reset 5-second auto-hide timer
