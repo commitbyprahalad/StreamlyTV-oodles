@@ -194,8 +194,8 @@ UOFkMrvkjg==</DigestValue>
 </Reference>
 <Reference URI="author-signature.xml">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>tcpBZrxXlokGLaNsm9tyfhbphXFZAjAA7GI9s/wGzpQMTKRLVh8LUIctIuLWxY43TuBpYgt+rcEL
-na+vjvPeyQ==</DigestValue>
+<DigestValue>jyqqJjaKE6WVZGAWZeu6IIhJoI9autUxetb0bYVkH15woGhTd+Nb3BtmOt5cCxpVGA6Mmg3Asaw1
+pU3Smo1ujg==</DigestValue>
 </Reference>
 <Reference URI="config.xml">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -519,8 +519,8 @@ uPSa3DFAEg==</DigestValue>
 </Reference>
 <Reference URI="js%2Finternet-monitor.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>SlCBVSpubnMDtjc7g+b3q+5zG6ZeaV50ca0voP1uQoB/KqbE3VWnejL3XFogt2rZjgev2dZ1ZkQd
-X/EUU+gkhw==</DigestValue>
+<DigestValue>ynHy6IfXvltnSrMs7mqOvHGjVBzHALLdreNPs+GeGAMGPy7zyWBc7EU4C0qgArXqSlIcEuNLpmuI
+QyZULH+wDQ==</DigestValue>
 </Reference>
 <Reference URI="js%2Flogin-session.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -572,10 +572,10 @@ Gkeaj0e4FQ==</DigestValue>
 <DigestValue>Cr7cojOjgiTNE2ilMfWU2qWnZJH1/X6qdz+kjygm4VGSDHiz12IDPS46IkzX74lfLHIrIeFJ3xWC
 qNUckthwAA==</DigestValue>
 </Reference>
-<Reference URI="programmeguide%2Fepg-app%2Findex-legacy-RFx0jq17.js">
+<Reference URI="programmeguide%2Fepg-app%2Findex-legacy-DNrGQ9jR.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>KysavQNCAMghFVgyFx/hQUt0RuanKL8J032U+bt2BTI3j9Ban40t4PPLpxKiAz6l96aWEqwZct6U
-56JVIGA1cw==</DigestValue>
+<DigestValue>+va/fDvrxxWXd2ns38bI/0r/pfhXy2k7WJ615je758aRwLxgsI4TmfuUJ7X3omG+Y/TKJm3lApPq
+lGoF8dOaGA==</DigestValue>
 </Reference>
 <Reference URI="programmeguide%2Fepg-app%2Fpolyfills-legacy-MXKDOyQ8.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -589,8 +589,8 @@ y/V3x6dEcA==</DigestValue>
 </Reference>
 <Reference URI="programmeguide%2Fepg.html">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>LMsQ5oo4wRbzhNg1WfYMpA9EfZllyUnJI3XrodjzAUEfA9ITr87GKSk1KBVVaAoZ8MKRSUhU4pOx
-X5fp5Azz1g==</DigestValue>
+<DigestValue>blKJzKlRW0epxEtNr2A2ZVJb8SVXaZ4QEBvc6aRZQh8vt3yGvk5fXGnLMNYSWZcd9MAaw4BxiWMz
+rRQoyvrUqA==</DigestValue>
 </Reference>
 <Reference URI="programmeguide%2Fmodern-epg-player.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -599,8 +599,8 @@ iRG9nkluyw==</DigestValue>
 </Reference>
 <Reference URI="programmeguide%2Fmodern-epg.css">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>cZ1uSIefSwPuJ8yM1JyyQ2AfGhyGMLHHFplBbnuzla1bbVklo8Ye4r00Jgbo7WRcj/1wHXeooQBO
-RIqBQ2QKUA==</DigestValue>
+<DigestValue>GZG7eu5N5bYcNb+/AioL7C+zyFAoz2TIyXcq6ccX3I7BreD3nEDnyV6IHmWGCgumFrzFWWRb9+R3
+Yeg02Vdz7A==</DigestValue>
 </Reference>
 <Reference URI="settings%2Fsettings.css">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -629,8 +629,8 @@ jvMUglT+Sw==</DigestValue>
 </Reference>
 <Reference URI="subscription%2Fsubscription.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>13n24m8Bgs5H1xlq4+hIUQ3KfrJd4CjfraEc0F5CE7UD1zTxAHfweAter6J4HaUkkLyLVc+VOwEB
-J19mAkBUTg==</DigestValue>
+<DigestValue>Eo8unZxopcAbTyZOMf6Ffbs0p2klf1XpAogPb/LIYkDLTrtwS2ePYS/g9X2xZT5mPBLkvITHFXzx
+RtfXKUBlBA==</DigestValue>
 </Reference>
 <Reference URI="webfonts%2Ffa-brands-400.eot">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -717,11 +717,11 @@ GyvKX9Snig==</DigestValue>
 </Reference>
 </SignedInfo>
 <SignatureValue>
-K4tRHhpnztfNUXbPTLDzbNjWX8ierAFmmy+Io5Y5G38TdMqk3XjCYb5v/MenEhU/mdyMAII4Jd+2
-pnsuIfOc+GTq61OJ6l8bBCG5pHcp7JIqZbJiIqybXMBaGM6AoKY6vVMb/HINqb8JKPJIorKTLQOm
-Z5UpKV+5bIuykAR9/sWu6HnuC7vwgc2c+CXzOtJHdw7abyEqxzKzzo/rJIcFYwSjeKg7bLUYsudz
-0ryk9AsiYAlQsu+RrEAydo3Z4EkBY+uLF1CoR3muyY7pzPryBqjdAYje/P95z5femvuenpZX22QP
-rp3K8axmD26vBS+3idoUtnC7YidZbPqum+wMRw==
+IA/Vs8v9yS8IgrlWyZqJV4m5rTNBM0GP/WJUvf2pzQK2PtDl+hM2el6xcKlXapkfzKxDzuDTBFZS
+X9gNhc42OICl3kfQ20WRuR1GEZhhuAOgWVV16jLb4EH7zonKTd2g8vLMZ/Nn9QstjxMb4besLhul
+D1O9LfuMgxNRXnoq92zMltxzpXfA5mW1ZWRujtKmNIzksetgG3XYW9DGc/z3tp8bPtCv3Ipk4DVK
+prJk69manrS7eZTNczeL7qiN4tnLl1NIPpyEsGu6wdJ3ylBPYTfDoC4f7VNkVGZMMQBDGHXUmKkk
+8YpHo+UvXIAsNpbfYOysv/srwlvZ328o/kz+dw==
 </SignatureValue>
 <KeyInfo>
 <X509Data>

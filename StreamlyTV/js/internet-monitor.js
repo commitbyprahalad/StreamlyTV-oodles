@@ -9,12 +9,24 @@
  *  - A failed XHR fires both readystatechange (status 0) and onerror, so one
  *    failed check counted twice and hit the 2-failure threshold by itself.
  *
+ * Why it then showed on a weak connection:
+ *  - The OS 'offline' event (and navigator.onLine false) opened the popup at
+ *    once, but Tizen fires it on short Wi-Fi drops that recover by themselves.
+ *  - 2 failed probes 3s apart were enough, so a few slow seconds tripped it.
+ *  - The two probe images were tried one after the other, so a slow first
+ *    host used up the time before the second was even asked.
+ *
  * Now:
- *  - The probe loads a small image (images need no CORS): Google's favicon,
- *    and if that fails StreamlyTV's own, so one blocked or slow site can't
- *    make the app look offline. Only when both fail does a probe fail.
- *  - Offline = 2 failed probes in a row (each counted once), or the OS
- *    reporting the network as down (window 'offline').
+ *  - The probe loads a small image (images need no CORS) from Google and from
+ *    StreamlyTV at the same time; the first one to load means online. Only
+ *    when both fail or time out does a probe fail.
+ *  - The popup shows only when the connection has stayed down: at least
+ *    FAILURE_THRESHOLD failed probes in a row AND failures for OFFLINE_GRACE
+ *    since the first one. Any successful probe in between resets both.
+ *  - The OS 'offline' event / navigator.onLine false count as a failed probe
+ *    and start the confirmation early; they no longer open the popup.
+ *  - Once the connection is confirmed down, Retry re-checks and the popup
+ *    comes back straight away if it still fails (no second grace period).
  *  - The popup closes by itself as soon as a probe succeeds again.
  *  - No probes while the app is in the background.
  */
@@ -24,16 +36,19 @@
 
     const InternetMonitor = {
         CHECK_INTERVAL: 30000,         // online: a light probe every 30s
+        CHECK_INTERVAL_SUSPECT: 5000,  // a probe failed: confirm every 5s
         CHECK_INTERVAL_OFFLINE: 3000,  // offline: notice the connection is back quickly
-        TIMEOUT: 8000,                 // TVs can be slow while a stream starts
-        FAILURE_THRESHOLD: 2,
+        TIMEOUT: 10000,                // weak Wi-Fi and stream start-up make images slow
+        FAILURE_THRESHOLD: 3,          // failed probes in a row...
+        OFFLINE_GRACE: 20000,          // ...over at least this long before the popup
         PROBE_URLS: [
             'https://www.google.com/favicon.ico',
             'https://streamlytv.com/favicon.ico'
         ],
 
-        isOnline: true,
+        isOnline: true,                // false once the connection is confirmed down
         consecutiveFailures: 0,
+        _failingSince: 0,              // time of the first failure in the current run
         checkTimer: null,
         _checking: false,
         _popupShown: false,
@@ -46,8 +61,9 @@
 
         setupBrowserEvents: function () {
             const self = this;
-            // The OS says the network is gone: no need to probe
-            window.addEventListener('offline', function () { self.handleOffline(); });
+            // The OS says the network is gone: confirm it instead of trusting
+            // it, short drops on a weak network come back within seconds
+            window.addEventListener('offline', function () { self.checkConnection(); });
             window.addEventListener('online', function () { self.checkConnection(); });
             document.addEventListener('visibilitychange', function () {
                 if (!document.hidden) self.checkConnection();
@@ -82,38 +98,49 @@
         checkConnection: function () {
             if (this._checking || document.hidden) return;
             if (navigator.onLine === false) {
-                this.handleOffline();
+                this.handleFailure();
                 return;
             }
             const self = this;
             const urls = this.PROBE_URLS;
-            let i = 0;
+            let pending = urls.length;
+            let settled = false;
             this._checking = true;
-            function next() {
-                if (i >= urls.length) {
-                    self._checking = false;
-                    self.handleFailure();
-                    return;
-                }
-                self.probe(urls[i++], function (ok) {
+            // All hosts at once: the first that loads settles the check
+            for (let i = 0; i < urls.length; i++) {
+                this.probe(urls[i], function (ok) {
+                    if (settled) return;
+                    pending--;
                     if (ok) {
+                        settled = true;
                         self._checking = false;
                         self.handleOnline();
-                    } else {
-                        next();
+                    } else if (pending === 0) {
+                        settled = true;
+                        self._checking = false;
+                        self.handleFailure();
                     }
                 });
             }
-            next();
         },
 
         handleFailure: function () {
+            const now = Date.now();
+            if (!this._failingSince) this._failingSince = now;
             this.consecutiveFailures++;
-            if (this.consecutiveFailures >= this.FAILURE_THRESHOLD) {
+
+            // Already confirmed down (e.g. Retry pressed while still offline)
+            if (!this.isOnline) {
+                this.handleOffline();
+                return;
+            }
+            if (this.consecutiveFailures >= this.FAILURE_THRESHOLD &&
+                now - this._failingSince >= this.OFFLINE_GRACE) {
                 this.handleOffline();
             } else {
-                // Confirm quickly instead of waiting a full interval
-                this.schedule(this.CHECK_INTERVAL_OFFLINE);
+                // Probably a short drop: keep checking until it either
+                // recovers or has lasted long enough to count as offline
+                this.schedule(this.CHECK_INTERVAL_SUSPECT);
             }
         },
 
@@ -125,10 +152,9 @@
             this._popupShown = true;
             const self = this;
             PopupManager.noInternet(function () {
-                // Retry pressed: the popup is closed; it comes back if the
-                // next probes still fail.
+                // Retry pressed: the popup is closed; it comes back at once
+                // if the connection is still down.
                 self._popupShown = false;
-                self.consecutiveFailures = 0;
                 self.checkConnection();
             });
         },
@@ -137,6 +163,7 @@
             const wasOffline = !this.isOnline || this.consecutiveFailures > 0;
             this.isOnline = true;
             this.consecutiveFailures = 0;
+            this._failingSince = 0;
             if (this._popupShown) {
                 this._popupShown = false;
                 PopupManager.dismiss('nointernet');

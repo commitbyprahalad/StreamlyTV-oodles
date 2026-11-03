@@ -134,10 +134,21 @@ const SubscriptionScreen = (function () {
 
     // ─── Status ─────────────────────────────────────────────────────────────
     // source: 'init' | 'refresh' | 'poll'
-    function loadStatus(source) {
+    // A request lost to a short network drop is retried before the
+    // no-internet popup is shown.
+    const STATUS_RETRIES = 2;
+    const STATUS_RETRY_DELAY_MS = 3000;
+
+    function loadStatus(source, attempt) {
+        attempt = attempt || 0;
         if (source !== 'poll') LoadingManager.show();
 
         request('POST', API.SUBSCRIPTION_CHECK, null, function (data) {
+            if (!data && source !== 'poll' && attempt < STATUS_RETRIES) {
+                // Keep the loader up while retrying
+                setTimeout(function () { loadStatus(source, attempt + 1); }, STATUS_RETRY_DELAY_MS);
+                return;
+            }
             if (source !== 'poll') LoadingManager.hide();
 
             if (!data) {

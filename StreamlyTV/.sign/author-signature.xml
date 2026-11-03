@@ -514,8 +514,8 @@ uPSa3DFAEg==</DigestValue>
 </Reference>
 <Reference URI="js%2Finternet-monitor.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>SlCBVSpubnMDtjc7g+b3q+5zG6ZeaV50ca0voP1uQoB/KqbE3VWnejL3XFogt2rZjgev2dZ1ZkQd
-X/EUU+gkhw==</DigestValue>
+<DigestValue>ynHy6IfXvltnSrMs7mqOvHGjVBzHALLdreNPs+GeGAMGPy7zyWBc7EU4C0qgArXqSlIcEuNLpmuI
+QyZULH+wDQ==</DigestValue>
 </Reference>
 <Reference URI="js%2Flogin-session.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -567,10 +567,10 @@ Gkeaj0e4FQ==</DigestValue>
 <DigestValue>Cr7cojOjgiTNE2ilMfWU2qWnZJH1/X6qdz+kjygm4VGSDHiz12IDPS46IkzX74lfLHIrIeFJ3xWC
 qNUckthwAA==</DigestValue>
 </Reference>
-<Reference URI="programmeguide%2Fepg-app%2Findex-legacy-RFx0jq17.js">
+<Reference URI="programmeguide%2Fepg-app%2Findex-legacy-DNrGQ9jR.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>KysavQNCAMghFVgyFx/hQUt0RuanKL8J032U+bt2BTI3j9Ban40t4PPLpxKiAz6l96aWEqwZct6U
-56JVIGA1cw==</DigestValue>
+<DigestValue>+va/fDvrxxWXd2ns38bI/0r/pfhXy2k7WJ615je758aRwLxgsI4TmfuUJ7X3omG+Y/TKJm3lApPq
+lGoF8dOaGA==</DigestValue>
 </Reference>
 <Reference URI="programmeguide%2Fepg-app%2Fpolyfills-legacy-MXKDOyQ8.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -584,8 +584,8 @@ y/V3x6dEcA==</DigestValue>
 </Reference>
 <Reference URI="programmeguide%2Fepg.html">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>LMsQ5oo4wRbzhNg1WfYMpA9EfZllyUnJI3XrodjzAUEfA9ITr87GKSk1KBVVaAoZ8MKRSUhU4pOx
-X5fp5Azz1g==</DigestValue>
+<DigestValue>blKJzKlRW0epxEtNr2A2ZVJb8SVXaZ4QEBvc6aRZQh8vt3yGvk5fXGnLMNYSWZcd9MAaw4BxiWMz
+rRQoyvrUqA==</DigestValue>
 </Reference>
 <Reference URI="programmeguide%2Fmodern-epg-player.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -594,8 +594,8 @@ iRG9nkluyw==</DigestValue>
 </Reference>
 <Reference URI="programmeguide%2Fmodern-epg.css">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>cZ1uSIefSwPuJ8yM1JyyQ2AfGhyGMLHHFplBbnuzla1bbVklo8Ye4r00Jgbo7WRcj/1wHXeooQBO
-RIqBQ2QKUA==</DigestValue>
+<DigestValue>GZG7eu5N5bYcNb+/AioL7C+zyFAoz2TIyXcq6ccX3I7BreD3nEDnyV6IHmWGCgumFrzFWWRb9+R3
+Yeg02Vdz7A==</DigestValue>
 </Reference>
 <Reference URI="settings%2Fsettings.css">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -624,8 +624,8 @@ jvMUglT+Sw==</DigestValue>
 </Reference>
 <Reference URI="subscription%2Fsubscription.js">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
-<DigestValue>13n24m8Bgs5H1xlq4+hIUQ3KfrJd4CjfraEc0F5CE7UD1zTxAHfweAter6J4HaUkkLyLVc+VOwEB
-J19mAkBUTg==</DigestValue>
+<DigestValue>Eo8unZxopcAbTyZOMf6Ffbs0p2klf1XpAogPb/LIYkDLTrtwS2ePYS/g9X2xZT5mPBLkvITHFXzx
+RtfXKUBlBA==</DigestValue>
 </Reference>
 <Reference URI="webfonts%2Ffa-brands-400.eot">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"></DigestMethod>
@@ -712,11 +712,11 @@ QY10fG1EWQ==</DigestValue>
 </Reference>
 </SignedInfo>
 <SignatureValue>
-af9YJe8DFbMF+AxF83LHGUrjx6amQnxruvolRSN0tw4UHtm74nAATJ9iiRHaFF4uPoAiaSuJY/Cd
-a8f88p8DyslKFNlhfGosf6BpWAjmGSjWp6RVhoKeccbRvzHFEogC0jnX+9vz3SSm+E9Use4A4btQ
-bdnQkfLUKvCY5I9CnLC3O7S2jOW2I2LtGWI5rJdaXVrWvv7r4ogxzMiQ+UNmXonhReq6iN6tAO5Y
-XUuW+PoySoEeo1S1PSsvNlJxKkbPxwlBQvGG/qIufJW5A9wlIwdjRQPKgH9lMYJYuGXLnyj9szCH
-fDF6mc8N/9bbKYvROzcICRwuChrbSE1IULFDrQ==
+hXi2YRkeO1t8lzK6GlArRkcm+neMXlwXybTYPwwpb67OiaU9uglxVgucj9kB+AbLEDX5aPWPBpxY
+XvQEyQiE+LTKJHp2+8lSVtuZVF3XJnjhIEp35OJ8itt0ivqhkqIizxfh7TxcywQ4mx7IWQS38/5q
+eHr2gC4k2cRbrI96uSSZjmPDjt1+BC5jMbW0BczKnDnnwZ8anS0UzE9LEGIcvB3RRzMcMIF0Z90+
+hHzaqyATJ7O77A/IxbznE8mbAuGBboZfCHDinN66nP7WpF7YZ1KULShJeGHn9Qa8lOcDY+dI/PRw
+ZPVW29z/EQPlToj/Hx8vUDYGOi4rjv1V6G5dVQ==
 </SignatureValue>
 <KeyInfo>
 <X509Data>
